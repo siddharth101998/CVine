@@ -7,7 +7,7 @@ import AuthForm from "./components/authform";
 function App() {
     return (
         <Router>  {/* Wrap everything inside BrowserRouter */}
-            {/* <Navbar /> */}
+            <Navbar />
             <Routes>
                 <Route path="/" element={<AuthForm />} />
                 <Route path="/login_register" element={<AuthForm />} />
