@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/navbar";
 import Home from "./pages/home";  // Example pages
 import AuthForm from "./components/authform";
+import ChatComponent from "./components/chat/ChatComponent";
 
 function App() {
     return (
@@ -11,7 +12,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<AuthForm />} />
                 <Route path="/login_register" element={<AuthForm />} />
-
+                <Route path="/chat" element={<ChatComponent />} />
             </Routes>
         </Router>
     );
