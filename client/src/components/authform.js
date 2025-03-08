@@ -3,6 +3,7 @@ import { registerUser, loginUser } from "../authService";
 import backgroundVideo from "../assets/login_bg.mp4";
 import logo from "../assets/logo.png"; // Import Logo
 import { Box, Container, Paper, Typography, TextField, Button, Link } from "@mui/material";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const AuthForm = () => {
     // State variables to manage form inputs
@@ -13,6 +14,8 @@ const AuthForm = () => {
     const [error, setError] = useState("");
     const [showForm, setShowForm] = useState(false); // Controls form & logo visibility after 2.5 seconds
     const videoRef = useRef(null); // Reference to the video element
+
+    const navigate = useNavigate(); // Initialize navigation
 
     // Effect to control video playback and display form + logo after 2.5 seconds
     useEffect(() => {
@@ -53,7 +56,9 @@ const AuthForm = () => {
                 alert("Registered successfully!");
             } else {
                 await loginUser(email, password);
+
                 alert("Logged in successfully!");
+                navigate("/chat");
             }
         } catch (err) {
             setError(err.message);
@@ -104,7 +109,7 @@ const AuthForm = () => {
                                 color: "black",
                                 textAlign: "center",
                                 position: "relative",
-                                
+
                             }}
                         >
                             {/* Logo Appears at the Top */}
@@ -113,7 +118,7 @@ const AuthForm = () => {
                                     src={logo}
                                     alt="Logo"
                                     style={{
-                                        width: "250px", 
+                                        width: "250px",
                                         height: "240px",
                                         display: "block",
                                         margin: "auto",
@@ -176,14 +181,14 @@ const AuthForm = () => {
                                         mt: 2,
                                         borderRadius: 2,
                                         background: isRegister
-                                        ? "linear-gradient(45deg, #722F37, #B22222)" // Wine gradient for Register
-                                        : "linear-gradient(45deg, #2E8B57, #3CB371)", // Green gradient for Login
-                                    "&:hover": {
-                                        background: isRegister
-                                            ? "linear-gradient(45deg, #B22222, #722F37)" // Darker Wine on Hover
-                                            : "linear-gradient(45deg, #3CB371, #2E8B57)", // Darker Green on Hover
-                                    },
-                                    
+                                            ? "linear-gradient(45deg, #722F37, #B22222)" // Wine gradient for Register
+                                            : "linear-gradient(45deg, #2E8B57, #3CB371)", // Green gradient for Login
+                                        "&:hover": {
+                                            background: isRegister
+                                                ? "linear-gradient(45deg, #B22222, #722F37)" // Darker Wine on Hover
+                                                : "linear-gradient(45deg, #3CB371, #2E8B57)", // Darker Green on Hover
+                                        },
+
                                     }}
                                 >
                                     {isRegister ? "Register" : "Login"}

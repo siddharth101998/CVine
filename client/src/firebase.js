@@ -14,7 +14,11 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 console.log("Firebase API Key:", process.env.REACT_APP_FIREBASE_API_KEY);
+<<<<<<< HEAD
 
 export const auth = getAuth(app); // Ensure auth is exported correctly
 
+=======
+export const auth = getAuth(app);
+>>>>>>> dev-sid
 export default app;
