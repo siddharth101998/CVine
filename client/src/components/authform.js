@@ -58,7 +58,7 @@ const AuthForm = () => {
                 await loginUser(email, password);
 
                 alert("Logged in successfully!");
-                navigate("/chat");
+                navigate("/homepage");
             }
         } catch (err) {
             setError(err.message);

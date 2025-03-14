@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const BottleViewSchema = new mongoose.Schema({
     bottleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Bottle', required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

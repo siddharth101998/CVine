@@ -1,3 +1,6 @@
+const mongoose = require('mongoose');
+
+
 const RecipeSchema = new mongoose.Schema({
     ingredients: { type: Object, required: true },
     bottles: { type: Object, required: true },
