@@ -7,20 +7,23 @@ import ChatComponent from "./components/chat/ChatComponent";
 import Bottle from "./components/bottle/bottle";
 import Homepage from "./components/home/homepage";
 import Dashboard from "./components/admin/dashboard";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
     return (
-        <Router>  {/* Wrap everything inside BrowserRouter */}
-            {/* <Navbar /> */}
-            <Routes>
-                <Route path="/" element={<AuthForm />} />
-                <Route path="/login_register" element={<AuthForm />} />
-                <Route path="/chat" element={<ChatComponent />} />
-                <Route path="/bottle/:id" element={<Bottle />} />
-                <Route path="/homepage" element={<Homepage />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-            </Routes>
-        </Router>
+        <AuthProvider>
+            <Router>  {/* Wrap everything inside BrowserRouter */}
+                {/* <Navbar /> */}
+                <Routes>
+                    <Route path="/" element={<AuthForm />} />
+                    <Route path="/login_register" element={<AuthForm />} />
+                    <Route path="/chat" element={<ChatComponent />} />
+                    <Route path="/bottle/:id" element={<Bottle />} />
+                    <Route path="/homepage" element={<Homepage />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 }
 

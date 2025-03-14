@@ -4,6 +4,8 @@ import backgroundVideo from "../assets/login_bg.mp4";
 import logo from "../assets/logo.png"; // Import Logo
 import { Box, Container, Paper, Typography, TextField, Button, Link } from "@mui/material";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 const AuthForm = () => {
     // State variables to manage form inputs
@@ -14,6 +16,7 @@ const AuthForm = () => {
     const [error, setError] = useState("");
     const [showForm, setShowForm] = useState(false); // Controls form & logo visibility after 2.5 seconds
     const videoRef = useRef(null); // Reference to the video element
+    const { login } = useAuth();
 
     const navigate = useNavigate(); // Initialize navigation
 
@@ -56,6 +59,14 @@ const AuthForm = () => {
                 alert("Registered successfully!");
             } else {
                 await loginUser(email, password);
+                // Call backend API to get user details from MongoDB
+                const res = await axios.post("http://localhost:5002/user/login", { email });
+
+                // Check if the response is valid
+                if (res.status === 200) {
+                    // Set the user details in AuthContext
+                    login(res.data.user);
+                }
 
                 alert("Logged in successfully!");
                 navigate("/homepage");

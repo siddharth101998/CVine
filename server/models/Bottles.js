@@ -13,7 +13,8 @@ const BottleSchema = new mongoose.Schema({
     grapeType: { type: String },
     country: { type: String, required: true },
     alcoholContent: { type: String, },
-    boldness: { type: Object }
+    boldness: { type: Object },
+    viewcount: { type: Number, default: 0 }
 });
 
 module.exports = mongoose.model('Bottle', BottleSchema);

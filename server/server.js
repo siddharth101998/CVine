@@ -203,6 +203,8 @@ app.post('/process-image', async (req, res) => {
 });
 
 //API'ss for DataBase
+const userRoutes = require("./Routes/UserRoutes");
+app.use('/user', userRoutes);
 
 const bottleRoutes = require("./Routes/bottleRoutes");
 app.use('/bottle', bottleRoutes);
@@ -215,6 +217,9 @@ app.use('/winetype', winetypeRoutes);
 
 const grapetypeRoutes = require("./Routes/grapetypeRoutes");
 app.use('/grapetype', grapetypeRoutes);
+
+const bottleviewRoutes = require("./Routes/bottleviewRoutes");
+app.use('/bottleview', bottleviewRoutes);
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

@@ -4,6 +4,7 @@ import { TextField, Box, List, ListItem, Typography, Card, CardContent, Circular
 import { Search, FilterList } from "@mui/icons-material"; // Material Icons
 import debounce from "lodash.debounce";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext.js"
 
 const Homepage = () => {
     const [searchResults, setSearchResults] = useState([]);
@@ -16,8 +17,10 @@ const Homepage = () => {
     const [selectedWineType, setSelectedWineType] = useState("");
     const [selectedGrapeType, setSelectedGrapeType] = useState("");
     const navigate = useNavigate();
+    const { user } = useAuth();
 
     useEffect(() => {
+        console.log("user", user)
         fetchCountries();
         fetchWineTypes();
         fetchGrapeTypes();
@@ -82,6 +85,23 @@ const Homepage = () => {
         setSearchText(value);
         debouncedSearch(value);
     };
+    const updateBottleView = async (bottleid) => {
+        try {
+            const userId = user?._id; // Replace with actual logged-in user ID
+            await axios.post("http://localhost:5002/bottleView/", { bottleId: bottleid, userId });
+            console.log("Bottle view updated successfully.");
+
+        } catch (error) {
+            console.error("Error updating bottle view:", error);
+        }
+    }
+    const handlebottle = async (bottleid) => {
+        updateBottleView(bottleid);
+        navigate(`/bottle/${bottleid}`)
+
+    }
+
+
 
     return (
         <Box sx={{ maxWidth: 600, margin: "auto", mt: 4, p: 3, textAlign: "center", backgroundColor: "#f5f5f5", borderRadius: "8px", boxShadow: 3 }}>
@@ -156,7 +176,7 @@ const Homepage = () => {
             {searchResults.length > 0 && (
                 <List sx={{ mt: 2 }}>
                     {searchResults.map((bottle) => (
-                        <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => navigate(`/bottle/${bottle._id}`)}>
+                        <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => handlebottle(bottle._id)}>
                             <Card sx={{ width: "100%", p: 2, boxShadow: 3, borderRadius: "10px", backgroundColor: "#fff" }}>
                                 <CardContent>
                                     <Typography variant="h6" sx={{ fontWeight: "bold" }}>{bottle.name}</Typography>

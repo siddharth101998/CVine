@@ -19,6 +19,7 @@ import PercentIcon from "@mui/icons-material/Percent";
 import InfoIcon from "@mui/icons-material/Info";
 import { useNavigate } from "react-router-dom"; // For navigation
 import { Button } from "@mui/material"; // For Material-UI buttons
+import { useAuth } from "../../context/AuthContext";
 
 const Bottle = () => {
     const { id } = useParams();
@@ -26,15 +27,25 @@ const Bottle = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
+    const { user } = useAuth();
+    const updateBottleView = async () => {
+        try {
+            const userId = user?._id; // Replace with actual logged-in user ID
+            await axios.post("http://localhost:5002/bottleView/", { bottleId: id, userId });
+            console.log("Bottle view updated successfully.");
+        } catch (error) {
+            console.error("Error updating bottle view:", error);
+        }
+    };
 
     useEffect(() => {
         const fetchBottle = async () => {
             try {
                 const response = await axios.get(`http://localhost:5002/bottle/${id}`);
-                // const response = await axios.get(`http://localhost:5002/bottle/`);
                 console.log("Bottle Data:", response.data.data);
                 setBottle(response.data.data);
                 setLoading(false);
+                // updateBottleView(); // Call the view update function after fetching the bottle
             } catch (err) {
                 setError("Failed to load bottle details.");
                 setLoading(false);
