@@ -1,5 +1,6 @@
 //const bcrypt = require('bcrypt');
 const User = require("../models/User");
+const Badges = require("../models/Badges");
 
 const getUserProfile = async (req, res) => {
   try {
@@ -27,36 +28,36 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-const incrementLoginCount = async (req, res) => {
+const incrementLoginCount = async (userId) => {
   try {
-    const { id } = req.params;
-
-    if (!id) {
+    /* const { id } = req.params;
+    if (!user) {
       return res
         .status(400)
-        .json({ success: false, message: "User ID is required." });
-    }
+        .json({ success: false, message: "User ID is required." });}*/
 
-    const user = await User.findByIdAndUpdate(
-      id,
+    /* 
+        if (!user) {
+          return res
+          .status(404)
+          .json({ success: false, message: "User not found." });
+          } */
+
+    let incUser = await User.findByIdAndUpdate(
+      userId,
       { $inc: { loggedInCount: 1 } },
       { new: true }
     );
-
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
-    }
-
-    res
+    return incUser;
+    /* res
       .status(200)
-      .json({ success: true, message: "Login count updated.", data: user });
+      .json({ success: true, message: "Login count updated.", data: user }); */
   } catch (error) {
     console.error("Error updating login count:", error);
-    res
+    return false;
+    /* res
       .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+      .json({ success: false, message: "Server Error", error: error.message }); */
   }
 };
 
@@ -146,16 +147,76 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid email " });
+      return res
+        .status(400)
+        .json({ message: "Invalid email/User does not exists" });
+    }
+    const incrementLoginCountUser = await incrementLoginCount(user.id);
+
+    if (!incrementLoginCount) {
+      return res.status(400).json({ message: "Login count not updated" });
+    }
+
+    const badges = await Badges.find({});
+    const newBadgesAwarded = [];
+
+    for (const badge of badges) {
+      const isConditionMet = checkBadgeConditions(
+        incrementLoginCountUser,
+        badge.badgeConditions
+      );
+
+      if (isConditionMet && !user.badges.includes(badge._id)) {
+        newBadgesAwarded.push({
+          badgeId: badge._id,
+          badgeLogo: badge.badgeLogo,
+        });
+        user.badges.push(badge._id);
+      }
+    }
+
+    if (newBadgesAwarded.length > 0) {
+      await user.save();
     }
 
     res.status(200).json({
       message: "Login successful!",
-      user: user,
+      user: incrementLoginCountUser,
+      badgesAwarded: newBadgesAwarded,
     });
   } catch (err) {
-    console.error(err);
+    console.log(err);
     res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+const checkBadgeConditions = (user, condition) => {
+  console.log(condition, "condition");
+  const { field, operator, value } = condition[0];
+
+  if (
+    user[field] === undefined ||
+    user[field] === null ||
+    !operator ||
+    value === undefined ||
+    value === null
+  ) {
+    return false;
+  }
+
+  switch (operator) {
+    case ">":
+      return user[field] > value;
+    case ">=":
+      return user[field] >= value;
+    case "<":
+      return user[field] < value;
+    case "<=":
+      return user[field] <= value;
+    case "===":
+      return user[field] == value;
+    default:
+      return false;
   }
 };
 
