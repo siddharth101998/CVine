@@ -1,27 +1,16 @@
-// routes/recipeRoutes.js
-const express = require("express");
-const {
-    createRecipe,
-    getAllRecipes,
-    getRecipeById,
-    updateRecipe,
-    deleteRecipe,
-    likeRecipe,
-    dislikeRecipe,
-    addComment,
-} = require("../controllers/recipeController");
-const { protect } = require("../middleware/authMiddleware");
-
+const express = require('express');
 const router = express.Router();
+const recipeController = require('../controller/RecipeController');
 
-// Recipe routes
-router.post("/", protect, createRecipe); // Create recipe (Protected)
-router.get("/", getAllRecipes); // Get all recipes (Public)
-router.get("/:id", getRecipeById); // Get recipe by ID (Public)
-router.put("/:id", protect, updateRecipe); // Update recipe (Protected)
-router.delete("/:id", protect, deleteRecipe); // Delete recipe (Protected)
-router.post("/:id/like", protect, likeRecipe); // Like a recipe (Protected)
-router.post("/:id/dislike", protect, dislikeRecipe); // Dislike a recipe (Protected)
-router.post("/:id/comment", protect, addComment); // Add a comment (Protected)
+
+// Define routes and link them to controller functions
+router.post('/recipes', recipeController.createRecipe); // Create a new recipe
+router.get('/recipes', recipeController.getAllRecipes); // Get all recipes
+router.get('/recipes/:id', recipeController.getRecipeById); // Get recipe by ID
+router.put('/recipes/:id', recipeController.updateRecipe); // Update a recipe
+router.delete('/recipes/:id', recipeController.deleteRecipe); // Delete a recipe
+router.put('/recipes/:id/like', recipeController.addLike); // Add a like to a recipe
+router.put('/recipes/:id/dislike', recipeController.addDislike); // Add a dislike to a recipe
+router.put('/recipes/:id/comment', recipeController.addComment); // Add a comment to a recipe
 
 module.exports = router;
