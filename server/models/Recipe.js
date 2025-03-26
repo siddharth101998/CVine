@@ -1,13 +1,18 @@
+const mongoose = require('mongoose');
+
+
 const RecipeSchema = new mongoose.Schema({
+    name: { type: String, required: true },
     ingredients: { type: Object, required: true },
-    bottles: { type: Object, required: true },
+    bottles: { type: Object },
     likes: { type: Number, default: 0 },
     dislikes: { type: Number, default: 0 },
-    comments: [{ type: String }],
     expertRecommendation: { type: Boolean, default: false },
     method: { type: String },
     byUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    userName: { type: String }
+    userName: { type: String },
+    likedusers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    dislikedusers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
 
 module.exports = mongoose.model('Recipe', RecipeSchema);

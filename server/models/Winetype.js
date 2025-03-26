@@ -1,5 +1,7 @@
+const mongoose = require('mongoose');
+
 const WineTypeSchema = new mongoose.Schema({
-    id: { type: Number, unique: true },
+
     name: { type: String, required: true },
     description: { type: String }
 });
