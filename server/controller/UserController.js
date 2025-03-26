@@ -143,6 +143,7 @@ const updateUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log("login started")
 
     const user = await User.findOne({ email });
 

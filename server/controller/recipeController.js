@@ -1,11 +1,13 @@
 const Recipe = require('../models/Recipe'); // Import the Recipe model
-
+const RecipeComment = require('../models/Recipecomment');
 // Create a new recipe
 const createRecipe = async (req, res) => {
     try {
-        const { ingredients, bottles, method, userName, expertRecommendation, byUserId } = req.body;
+        console.log("recipe created started", req.body);
+        const { name, ingredients, bottles, method, userName, expertRecommendation, byUserId } = req.body;
 
         const newRecipe = new Recipe({
+            name,
             ingredients,
             bottles,
             method,
@@ -24,6 +26,7 @@ const createRecipe = async (req, res) => {
 // Get all recipes
 const getAllRecipes = async (req, res) => {
     try {
+        console.log("fetch recipe started")
         const recipes = await Recipe.find();
         res.status(200).json(recipes);
     } catch (error) {
@@ -70,57 +73,132 @@ const deleteRecipe = async (req, res) => {
     }
 };
 
-// Add a like to a recipe
-const addLike = async (req, res) => {
+// Toggling like
+const toggleLike = async (req, res) => {
     try {
-        const recipe = await Recipe.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { likes: 1 } },
-            { new: true }
-        );
+        const { recipeId, userId } = req.body;
+        const recipe = await Recipe.findById(recipeId);
         if (!recipe) {
             return res.status(404).json({ message: 'Recipe not found' });
         }
-        res.status(200).json(recipe);
+
+        const alreadyLiked = recipe.likedusers.includes(userId);
+        const alreadyDisliked = recipe.dislikedusers.includes(userId);
+
+        // If the user already liked, remove them from likedusers (unlike)
+        if (alreadyLiked) {
+            recipe.likedusers.pull(userId);
+            if (recipe.likes > 0) recipe.likes -= 1;
+        } else {
+            // If user was in dislikedusers, remove them
+            if (alreadyDisliked) {
+                recipe.dislikedusers.pull(userId);
+                if (recipe.dislikes > 0) recipe.dislikes -= 1;
+            }
+            // Add user to likedusers
+            recipe.likedusers.push(userId);
+            recipe.likes += 1;
+        }
+
+        const updatedRecipe = await recipe.save();
+        res.status(200).json(updatedRecipe);
     } catch (error) {
-        res.status(500).json({ message: 'Error adding like', error });
+        res.status(500).json({ message: 'Error toggling like', error });
     }
 };
 
-// Add a dislike to a recipe
-const addDislike = async (req, res) => {
+// Toggling dislike
+const toggleDislike = async (req, res) => {
     try {
-        const recipe = await Recipe.findByIdAndUpdate(
-            req.params.id,
-            { $inc: { dislikes: 1 } },
-            { new: true }
-        );
+        const { recipeId, userId } = req.body;
+        const recipe = await Recipe.findById(recipeId);
         if (!recipe) {
             return res.status(404).json({ message: 'Recipe not found' });
         }
-        res.status(200).json(recipe);
+
+        const alreadyLiked = recipe.likedusers.includes(userId);
+        const alreadyDisliked = recipe.dislikedusers.includes(userId);
+
+        // If the user already disliked, remove them from dislikedusers (undislike)
+        if (alreadyDisliked) {
+            recipe.dislikedusers.pull(userId);
+            if (recipe.dislikes > 0) recipe.dislikes -= 1;
+        } else {
+            // If user was in likedusers, remove them
+            if (alreadyLiked) {
+                recipe.likedusers.pull(userId);
+                if (recipe.likes > 0) recipe.likes -= 1;
+            }
+            // Add user to dislikedusers
+            recipe.dislikedusers.push(userId);
+            recipe.dislikes += 1;
+        }
+
+        const updatedRecipe = await recipe.save();
+        res.status(200).json(updatedRecipe);
     } catch (error) {
-        res.status(500).json({ message: 'Error adding dislike', error });
+        res.status(500).json({ message: 'Error toggling dislike', error });
     }
 };
 
 // Add a comment to a recipe
-const addComment = async (req, res) => {
+// const addComment = async (req, res) => {
+//     try {
+//         const { comment } = req.body;
+//         const recipe = await Recipe.findByIdAndUpdate(
+//             req.params.id,
+//             { $push: { comments: comment } },
+//             { new: true }
+//         );
+//         if (!recipe) {
+//             return res.status(404).json({ message: 'Recipe not found' });
+//         }
+//         res.status(200).json(recipe);
+//     } catch (error) {
+//         res.status(500).json({ message: 'Error adding comment', error });
+//     }
+// };
+const createComment = async (req, res) => {
     try {
-        const { comment } = req.body;
-        const recipe = await Recipe.findByIdAndUpdate(
-            req.params.id,
-            { $push: { comments: comment } },
-            { new: true }
-        );
-        if (!recipe) {
-            return res.status(404).json({ message: 'Recipe not found' });
-        }
-        res.status(200).json(recipe);
+        console.log("comment started", req.body)
+        // Destructure th
+        // e required fields from the request body
+        const { recipeId, userId, comment } = req.body;
+        const newComment = new RecipeComment({ recipeId, userId, comment });
+        const savedComment = await newComment.save();
+        res.status(201).json(savedComment);
     } catch (error) {
-        res.status(500).json({ message: 'Error adding comment', error });
+        res.status(500).json({ message: 'Error creating comment', error });
     }
 };
+
+// Get all comments for a specific recipe by recipeId
+const getCommentsByRecipeId = async (req, res) => {
+    try {
+        const { recipeId } = req.params;
+        const comments = await RecipeComment.find({ recipeId });
+        res.status(200).json(comments);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching comments', error });
+    }
+};
+
+// Delete a comment by its comment id
+const deleteComment = async (req, res) => {
+    try {
+        const { id } = req.params; // The comment id to delete
+        const deletedComment = await RecipeComment.findByIdAndDelete(id);
+        if (!deletedComment) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+        res.status(200).json({ message: 'Comment deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting comment', error });
+    }
+};
+
+
+
 
 module.exports = {
     createRecipe,
@@ -128,7 +206,9 @@ module.exports = {
     getRecipeById,
     updateRecipe,
     deleteRecipe,
-    addLike,
-    addDislike,
-    addComment
+    toggleDislike,
+    toggleLike,
+    createComment,
+    getCommentsByRecipeId,
+    deleteComment
 };

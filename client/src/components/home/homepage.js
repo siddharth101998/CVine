@@ -159,35 +159,49 @@ const Homepage = () => {
                     </Select>
                 </FormControl>
             </Box>
+            <Box sx={{ display: "flex", flexDirection: "column" }}>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate('/dashboard')}
+                    sx={{ mb: 2 }}
+                >
+                    Go to Dashboard
+                </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate('/recipe')}
+                    sx={{ mb: 2 }}
+                >
+                    Go to recipe
+                </Button>
+            </Box >
 
-            <Button
-                variant="contained"
-                color="primary"
-                onClick={() => navigate('/dashboard')}
-                sx={{ mb: 2 }}
-            >
-                Go to Dashboard
-            </Button>
 
             {/* Show loading spinner */}
             {loading && <CircularProgress sx={{ mt: 2 }} />}
 
             {/* Search Results */}
-            {searchResults.length > 0 && (
-                <List sx={{ mt: 2 }}>
-                    {searchResults.map((bottle) => (
-                        <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => handlebottle(bottle._id)}>
-                            <Card sx={{ width: "100%", p: 2, boxShadow: 3, borderRadius: "10px", backgroundColor: "#fff" }}>
-                                <CardContent>
-                                    <Typography variant="h6" sx={{ fontWeight: "bold" }}>{bottle.name}</Typography>
-                                    <Typography variant="body2" sx={{ color: "gray" }}>{bottle.winery}</Typography>
-                                </CardContent>
-                            </Card>
-                        </ListItem>
-                    ))}
-                </List>
-            )}
-        </Box>
+            {
+                searchResults.length > 0 && (
+                    <List sx={{ mt: 2 }}>
+                        {searchResults.map((bottle) => (
+                            <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => handlebottle(bottle._id)}>
+                                <Card sx={{ width: "100%", p: 2, boxShadow: 3, borderRadius: "10px", backgroundColor: "#fff" }}>
+                                    <CardContent>
+                                        <Typography variant="h6" sx={{ fontWeight: "bold" }}>{bottle.name}</Typography>
+                                        <Typography variant="body2" sx={{ color: "gray" }}>{bottle.winery}</Typography>
+                                    </CardContent>
+                                </Card>
+                            </ListItem>
+                        ))}
+                    </List>
+                )
+            }
+
+
+        </Box >
     );
 };
 

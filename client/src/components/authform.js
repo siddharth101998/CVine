@@ -68,6 +68,7 @@ const AuthForm = () => {
         alert("Registered successfully!");
       } else {
         await loginUser(email, password);
+        console.log("emailk", email)
         // Call backend API to get user details from MongoDB
         const res = await axios.post("http://localhost:5002/user/login", {
           email,

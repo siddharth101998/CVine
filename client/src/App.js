@@ -8,6 +8,7 @@ import Bottle from "./components/bottle/bottle";
 import Homepage from "./components/home/homepage";
 import Dashboard from "./components/admin/dashboard";
 import { AuthProvider } from "./context/AuthContext";
+import Recipe from "./components/recipe/recipe";
 
 function App() {
     return (
@@ -21,6 +22,7 @@ function App() {
                     <Route path="/bottle/:id" element={<Bottle />} />
                     <Route path="/homepage" element={<Homepage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/recipe" element={<Recipe />} />
                 </Routes>
             </Router>
         </AuthProvider>
