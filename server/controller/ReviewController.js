@@ -1,11 +1,12 @@
 const Review = require("../models/Review");
 
 const getAllReviews = async (req, res) => {
-  const { bottleId } = req.query;
+  console.log("review started")
+  const { id } = req.params;
   try {
-    const reviews = await Review.find({ bottleId }).populate(
+    const reviews = await Review.find({ bottleId: id }).populate(
       "userId",
-      "name email"
+      "name email username"
     );
     res.status(200).json({ success: true, data: reviews });
   } catch (error) {
@@ -15,8 +16,8 @@ const getAllReviews = async (req, res) => {
 
 const addReview = async (req, res) => {
   try {
-    const { bottleId, userId, reviewText, rating } = req.body;
-    if (!bottleId || !userId || !reviewText || !rating) {
+    const { bottleId, userId, reviewText, rating, username } = req.body;
+    if (!bottleId || !userId || !reviewText || !rating || !username) {
       return res.status(400).json({
         success: false,
         message: "Bottle ID, User ID, Review Text and Rating are required.",
@@ -32,8 +33,9 @@ const addReview = async (req, res) => {
 
 const deleteReview = async (req, res) => {
   try {
-    const { reviewId } = req.body;
-    const review = await Review.findById(reviewId);
+    console.log("delete started", req.params);
+    const { id } = req.params;
+    const review = await Review.findById(id);
     if (!review) {
       return res
         .status(404)

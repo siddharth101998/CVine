@@ -4,6 +4,7 @@ const Badges = require("../models/Badges");
 
 const getUserProfile = async (req, res) => {
   try {
+    console.log("fecth started");
     const { id } = req.params;
 
     if (!id) {
@@ -63,7 +64,8 @@ const incrementLoginCount = async (userId) => {
 
 const createUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    console.log("create started")
+    const { email, password, firstName } = req.body;
 
     if (!email || !password || !firstName) {
       return res

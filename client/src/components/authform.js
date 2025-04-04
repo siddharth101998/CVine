@@ -64,7 +64,8 @@ const AuthForm = () => {
     e.preventDefault();
     try {
       if (isRegister) {
-        await registerUser(email, password);
+        console.log("pas", password);
+        await registerUser(email, password, firstName);
         alert("Registered successfully!");
       } else {
         await loginUser(email, password);

@@ -176,6 +176,14 @@ const Homepage = () => {
                 >
                     Go to recipe
                 </Button>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate('/profile')}
+                    sx={{ mb: 2 }}
+                >
+                    Go to profile
+                </Button>
             </Box >
 
 

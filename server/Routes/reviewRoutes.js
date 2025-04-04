@@ -7,8 +7,8 @@ const {
   editReview,
 } = require("../controller/ReviewController");
 
-router.get("/", getAllReviews);
+router.get("/:id", getAllReviews);
 router.post("/", addReview);
-router.delete("/", deleteReview);
+router.delete("/:id", deleteReview);
 router.put("/", editReview);
 module.exports = router;

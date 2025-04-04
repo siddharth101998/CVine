@@ -9,6 +9,7 @@ import Homepage from "./components/home/homepage";
 import Dashboard from "./components/admin/dashboard";
 import { AuthProvider } from "./context/AuthContext";
 import Recipe from "./components/recipe/recipe";
+import UserProfile from "./components/user/userprofile";
 
 function App() {
     return (
@@ -23,6 +24,7 @@ function App() {
                     <Route path="/homepage" element={<Homepage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/recipe" element={<Recipe />} />
+                    <Route path="/profile" element={<UserProfile />} />
                 </Routes>
             </Router>
         </AuthProvider>

@@ -9,6 +9,9 @@ import {
     Grid,
     Box,
     IconButton,
+    Button,
+    Rating,
+    TextField
 } from "@mui/material";
 import WineBarIcon from "@mui/icons-material/WineBar";
 import StoreIcon from "@mui/icons-material/Store";
@@ -18,7 +21,6 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import PercentIcon from "@mui/icons-material/Percent";
 import InfoIcon from "@mui/icons-material/Info";
 import { useNavigate } from "react-router-dom"; // For navigation
-import { Button } from "@mui/material"; // For Material-UI buttons
 import { useAuth } from "../../context/AuthContext";
 
 const Bottle = () => {
@@ -26,6 +28,9 @@ const Bottle = () => {
     const [bottle, setBottle] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [reviews, setReviews] = useState([]);
+    const [newRating, setNewRating] = useState(0);
+    const [newReviewText, setNewReviewText] = useState("");
     const navigate = useNavigate();
     const { user } = useAuth();
     const updateBottleView = async () => {
@@ -53,6 +58,49 @@ const Bottle = () => {
         };
         fetchBottle();
     }, [id]);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const res = await axios.get(`http://localhost:5002/review/${id}`);
+                setReviews(res.data.data);
+            } catch (err) {
+                console.error('Failed to fetch reviews', err);
+            }
+        };
+        fetchReviews();
+    }, [id]);
+
+    const submitReview = async () => {
+        try {
+            const payload = {
+                bottleId: id,
+                userId: user?._id,
+                reviewText: newReviewText,
+                rating: newRating,
+                username: user?.username || 'Anonymous'
+            };
+            console.log("review payl;oad", payload)
+            const res = await axios.post('http://localhost:5002/review/', payload);
+            // Update the reviews list with the newly added review
+            setReviews([...reviews, res.data.data]);
+            // Clear the input fields
+            setNewRating(0);
+            setNewReviewText("");
+        } catch (err) {
+            console.error('Failed to submit review', err);
+        }
+    };
+
+    const deleteReview = async (reviewId) => {
+        try {
+            console.log("rec", reviewId);
+            const res = await axios.delete(`http://localhost:5002/review/${reviewId}`);
+            setReviews(prevReviews => prevReviews.filter(review => review._id !== reviewId));
+        } catch (err) {
+            console.error('Failed to fetch reviews', err);
+        }
+    }
 
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 5 }} />;
     if (error) return <Typography color="error">{error}</Typography>;
@@ -134,6 +182,67 @@ const Bottle = () => {
                         <InfoIcon sx={{ verticalAlign: "middle", mr: 1, color: "#757575" }} />
                         {bottle.fullDescription}
                     </Typography>
+                </Box>
+
+                {/* Review Section */}
+                <Box sx={{ mt: 4 }}>
+                    <Typography variant="h5" sx={{ mb: 2 }}>Reviews</Typography>
+                    {reviews.length > 0 ? (
+                        reviews.map((review) => (
+                            <Box
+                                key={review._id}
+                                sx={{ mb: 2, p: 2, backgroundColor: '#fafafa', borderRadius: '8px', height: 'auto' }}
+                            >
+
+                                <Rating value={review.rating} readOnly size="small" />
+                                <Typography variant="body2" sx={{ mt: 1 }}>
+                                    {review.reviewText}
+                                </Typography>
+                                <Typography variant="caption" sx={{ mt: 1, display: 'block', color: 'gray' }}>
+                                    By: {review.username}
+                                </Typography>
+
+                                <Button
+                                    variant="outlined"
+                                    color="error"
+                                    size="small"
+                                    onClick={() => deleteReview(review._id)}
+                                    sx={{ position: 'absolute', color: "red", mt: 1 }}
+                                >
+                                    Delete
+                                </Button>
+
+                            </Box>
+                        ))
+                    ) : (
+                        <Typography variant="body2" color="text.secondary">No reviews yet.</Typography>
+                    )}
+                    <Box sx={{ mt: 4 }}>
+                        <Typography variant="h6">Add a Review</Typography>
+                        <Rating
+                            name="new-review-rating"
+                            value={newRating}
+                            onChange={(e, newValue) => setNewRating(newValue)}
+                        />
+                        <TextField
+                            fullWidth
+                            multiline
+                            rows={4}
+                            variant="outlined"
+                            placeholder="Write your review here..."
+                            value={newReviewText}
+                            onChange={(e) => setNewReviewText(e.target.value)}
+                            sx={{ mt: 2 }}
+                        />
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{ mt: 2 }}
+                            onClick={submitReview}
+                        >
+                            Submit Review
+                        </Button>
+                    </Box>
                 </Box>
             </CardContent>
             <Button
