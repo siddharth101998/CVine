@@ -78,7 +78,8 @@ const getWishlist = async (req, res) => {
         const wishlist = await Wishlist.findOne({ userId: id }).populate('bottles');
         console.log("wish", wishlist)
         if (!wishlist) {
-            return res.status(404).json({ message: 'Wishlist not found' });
+            // Instead of returning 404, return an empty wishlist object
+            return res.status(200).json({ userId: id, bottles: [] });
         }
 
         res.status(200).json(wishlist);

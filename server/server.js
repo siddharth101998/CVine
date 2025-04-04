@@ -257,5 +257,8 @@ app.use("/recipe", recipeRoutes);
 const wishlistRoutes = require("./Routes/wishlistRoutes");
 app.use("/wishlist", wishlistRoutes);
 
+const searchHistoryRoutes = require("./Routes/searchHistoryRoutes");
+app.use("/searchHistory", searchHistoryRoutes);
+
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

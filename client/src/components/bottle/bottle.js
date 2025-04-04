@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import {
@@ -36,64 +36,91 @@ const Bottle = () => {
     const [wishlistAdded, setWishlistAdded] = useState(false);
     const navigate = useNavigate();
     const { user } = useAuth();
-    const updateBottleView = async () => {
+    const hasFetchedData = useRef(false);
+    // const updateBottleView = async () => {
+    //     try {
+    //         const userId = user?._id; // Replace with actual logged-in user ID
+    //         await axios.post("http://localhost:5002/bottleView/", { bottleId: id, userId });
+    //         console.log("Bottle view updated successfully.");
+    //     } catch (error) {
+    //         console.error("Error updating bottle view:", error);
+    //     }
+    // };
+
+    const fetchBottle = async () => {
         try {
-            const userId = user?._id; // Replace with actual logged-in user ID
-            await axios.post("http://localhost:5002/bottleView/", { bottleId: id, userId });
-            console.log("Bottle view updated successfully.");
+            const response = await axios.get(`http://localhost:5002/bottle/${id}`);
+            console.log("Bottle Data:", response.data.data);
+            setBottle(response.data.data);
+            setLoading(false);
+
+
+            // updateBottleView(); // Call the view update function after fetching the bottle
+        } catch (err) {
+            setError("Failed to load bottle details.");
+            setLoading(false);
+        }
+    };
+    const postHistory = async () => {
+        try {
+            console.log("history added")
+            const payload = {
+                userId: user?._id
+                , bottles: id
+            }
+            const res = await axios.post(`http://localhost:5002/searchHistory/`, payload);
+            if (res.status !== 201) {
+                throw new Error(`Failed to create search history entry: ${res.status}`);
+            }
+
         } catch (error) {
-            console.error("Error updating bottle view:", error);
+            setError("errrrrr")
+        }
+    }
+    const fetchWishlist = async () => {
+        if (!user) return;
+        try {
+            const res = await axios.get(`http://localhost:5002/wishlist/${user._id}`);
+            // Assuming the wishlist response contains an object with a 'bottles' array
+            console.log("res", res.data)
+            if (
+                res.data &&
+                res.data.bottles &&
+                res.data.bottles.some((bottleItem) => bottleItem._id === id)
+            ) {
+                setWishlistAdded(true);
+            } else {
+                setWishlistAdded(false);
+            }
+        } catch (error) {
+            console.error('Error fetching wishlist', error);
+        }
+
+    };
+    const fetchReviews = async () => {
+        try {
+            const res = await axios.get(`http://localhost:5002/review/${id}`);
+            setReviews(res.data.data);
+        } catch (err) {
+            console.error('Failed to fetch reviews', err);
         }
     };
 
-    useEffect(() => {
-        const fetchBottle = async () => {
-            try {
-                const response = await axios.get(`http://localhost:5002/bottle/${id}`);
-                console.log("Bottle Data:", response.data.data);
-                setBottle(response.data.data);
-                setLoading(false);
-                // updateBottleView(); // Call the view update function after fetching the bottle
-            } catch (err) {
-                setError("Failed to load bottle details.");
-                setLoading(false);
-            }
-        };
-        fetchBottle();
-    }, [id]);
 
     useEffect(() => {
-        const fetchWishlist = async () => {
-            if (!user) return;
-            try {
-                const res = await axios.get(`http://localhost:5002/wishlist/${user._id}`);
-                // Assuming the wishlist response contains an object with a 'bottles' array
-                console.log("res", res.data)
-                if (
-                    res.data &&
-                    res.data.bottles &&
-                    res.data.bottles.some((bottleItem) => bottleItem._id === id)
-                ) {
-                    setWishlistAdded(true);
-                } else {
-                    setWishlistAdded(false);
-                }
-            } catch (error) {
-                console.error('Error fetching wishlist', error);
-            }
-        };
+        if (!hasFetchedData.current) {
+            hasFetchedData.current = true;
+            postHistory();
+        }
+
+    }, [])
+    useEffect(() => {
+
         fetchWishlist();
     }, [user, id]);
 
     useEffect(() => {
-        const fetchReviews = async () => {
-            try {
-                const res = await axios.get(`http://localhost:5002/review/${id}`);
-                setReviews(res.data.data);
-            } catch (err) {
-                console.error('Failed to fetch reviews', err);
-            }
-        };
+        fetchBottle();
         fetchReviews();
     }, [id]);
 
@@ -144,6 +171,7 @@ const Bottle = () => {
 
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 5 }} />;
     if (error) return <Typography color="error">{error}</Typography>;
+
 
     return (
         <Card
