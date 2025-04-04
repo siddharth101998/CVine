@@ -85,18 +85,18 @@ const Homepage = () => {
         setSearchText(value);
         debouncedSearch(value);
     };
-    const updateBottleView = async (bottleid) => {
+    const updateBottleView = async (bottleid, bottlename) => {
         try {
             const userId = user?._id; // Replace with actual logged-in user ID
-            await axios.post("http://localhost:5002/bottleView/", { bottleId: bottleid, userId });
+            await axios.post("http://localhost:5002/bottleView/", { bottleId: bottleid, userId, bottlename: bottlename });
             console.log("Bottle view updated successfully.");
 
         } catch (error) {
             console.error("Error updating bottle view:", error);
         }
     }
-    const handlebottle = async (bottleid) => {
-        updateBottleView(bottleid);
+    const handlebottle = async (bottleid, bottlename) => {
+        updateBottleView(bottleid, bottlename);
         navigate(`/bottle/${bottleid}`)
 
     }
@@ -195,7 +195,7 @@ const Homepage = () => {
                 searchResults.length > 0 && (
                     <List sx={{ mt: 2 }}>
                         {searchResults.map((bottle) => (
-                            <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => handlebottle(bottle._id)}>
+                            <ListItem key={bottle._id} sx={{ justifyContent: "center", cursor: "pointer" }} onClick={() => handlebottle(bottle._id, bottle.name)}>
                                 <Card sx={{ width: "100%", p: 2, boxShadow: 3, borderRadius: "10px", backgroundColor: "#fff" }}>
                                     <CardContent>
                                         <Typography variant="h6" sx={{ fontWeight: "bold" }}>{bottle.name}</Typography>

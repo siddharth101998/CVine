@@ -3,15 +3,15 @@ const Bottle = require("../models/Bottles");
 
 const updateBottleView = async (req, res) => {
     try {
-        const { bottleId, userId } = req.body;
+        const { bottleId, userId, bottlename } = req.body;
 
-        if (!bottleId || !userId) {
+        if (!bottleId || !userId || !bottlename) {
             return res.status(400).json({ success: false, message: "Bottle ID and User ID are required." });
         }
 
         // Use `findOneAndUpdate` to update if exists, otherwise create a new entry
         let bottleView = await BottleView.findOneAndUpdate(
-            { bottleId, userId },
+            { bottleId, userId, bottlename: bottlename },
             { $inc: { viewCount: 1 } }, // Increment view count
             { new: true, upsert: true } // Create if not exists
         );

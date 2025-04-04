@@ -20,6 +20,8 @@ import PublicIcon from "@mui/icons-material/Public";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import PercentIcon from "@mui/icons-material/Percent";
 import InfoIcon from "@mui/icons-material/Info";
+import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
+import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom"; // For navigation
 import { useAuth } from "../../context/AuthContext";
 
@@ -31,6 +33,7 @@ const Bottle = () => {
     const [reviews, setReviews] = useState([]);
     const [newRating, setNewRating] = useState(0);
     const [newReviewText, setNewReviewText] = useState("");
+    const [wishlistAdded, setWishlistAdded] = useState(false);
     const navigate = useNavigate();
     const { user } = useAuth();
     const updateBottleView = async () => {
@@ -58,6 +61,29 @@ const Bottle = () => {
         };
         fetchBottle();
     }, [id]);
+
+    useEffect(() => {
+        const fetchWishlist = async () => {
+            if (!user) return;
+            try {
+                const res = await axios.get(`http://localhost:5002/wishlist/${user._id}`);
+                // Assuming the wishlist response contains an object with a 'bottles' array
+                console.log("res", res.data)
+                if (
+                    res.data &&
+                    res.data.bottles &&
+                    res.data.bottles.some((bottleItem) => bottleItem._id === id)
+                ) {
+                    setWishlistAdded(true);
+                } else {
+                    setWishlistAdded(false);
+                }
+            } catch (error) {
+                console.error('Error fetching wishlist', error);
+            }
+        };
+        fetchWishlist();
+    }, [user, id]);
 
     useEffect(() => {
         const fetchReviews = async () => {
@@ -102,6 +128,20 @@ const Bottle = () => {
         }
     }
 
+    const handlewishlist = async () => {
+        setWishlistAdded(!wishlistAdded);
+        try {
+            const payload = {
+                userId: user?._id
+                , bottleId: id
+            }
+            const res = await axios.post(`http://localhost:5002/wishlist/toggle`, payload)
+
+        } catch (error) {
+            console.error('Failed to add to wishlist', error);
+        }
+    }
+
     if (loading) return <CircularProgress sx={{ display: "block", margin: "auto", mt: 5 }} />;
     if (error) return <Typography color="error">{error}</Typography>;
 
@@ -121,6 +161,11 @@ const Bottle = () => {
                 <Typography variant="h4" sx={{ textAlign: "center", fontWeight: "bold", mb: 2 }}>
                     {bottle.name}
                 </Typography>
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
+                    <IconButton onClick={() => handlewishlist()} color="error">
+                        {wishlistAdded ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+                    </IconButton>
+                </Box>
 
                 {/* Image Section */}
                 <Box sx={{ display: "flex", justifyContent: "center" }}>
