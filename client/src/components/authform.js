@@ -73,7 +73,7 @@ const AuthForm = () => {
 
         if (res.status === 200) {
           login(res.data.user);
-          alert("Logged in successfully!");
+          // alert("Logged in successfully!");
           navigate("/homepage");
         }
       }

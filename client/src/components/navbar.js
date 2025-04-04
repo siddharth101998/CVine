@@ -44,7 +44,7 @@ const Navbar = () => {
                     background: "#f2e1e5",
                     boxShadow: "none",
                     transition: "0.3s ease-in-out",
-                    height: "120px",
+                    height: "80px",
                     display: "flex",
                     justifyContent: "center",
                 }}
