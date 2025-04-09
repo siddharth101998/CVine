@@ -14,7 +14,7 @@ const fs = require("fs");
 const csv = require("csv-parser");
 const Bottle = require("./models/Bottles");
 const Tesseract = require("tesseract.js");
-
+//const { chat, recommend } = require("./controller/gptController")
 const app = express();
 app.use(express.json());
 app.use(
@@ -59,8 +59,6 @@ async function callOpenAI(prompt, retries = 3) {
   }
   return "Error: Too many requests. Try again later.";
 }
-app.get("/", (req, res) => res.send("API Running..."));
-
 // Chat Route
 app.post("/api/chat", async (req, res) => {
   try {
@@ -107,30 +105,83 @@ app.post("/api/recommend", async (req, res) => {
       return res.status(400).json({ error: "Bottle name is required." });
     }
 
-    let wineList = [];
-    const csvFilePath = "../data/firebased_Data.csv";
+    // Stage 1: Get the wine attributes for the given bottle name.
+    const attributePrompt = `
+You are an expert sommelier.
+Given the wine name "${bottleName}", please provide the most likely wine attributes in the following JSON format:
+{
+  "wineType": "<wine type>",
+  "region": "<region>",
+  "grapeType": "<grape type>"
+}
+Where wine types are "Red wine", "White wine", "Desert wine", "Sparkling wine", "Rose wine".
+For region, for example, it should be just "Napa Valley" and not "Napa Valley, California".
+Ensure that your output is a valid JSON object with only these keys and nothing else.
+`;
 
-    fs.createReadStream(csvFilePath)
-      .pipe(csv({ separator: ",", quote: '"' }))
-      .on("data", (row) => {
-        wineList.push(row);
-      })
-      .on("end", async () => {
-        const wineNames = wineList
-          .map((wine) => wine["Wine Name"])
-          .filter(Boolean)
-          .join(", ");
-        const prompt = `Given the wine list: ${wineNames}, recommend the most similar wine to "${bottleName}".`;
+    const attributeResponse = await callOpenAI(attributePrompt);
+    console.log("atrRES", attributeResponse);
 
-        console.log("Sending Prompt to OpenAI:", prompt);
+    // Remove potential markdown formatting (e.g. triple backticks)
+    const cleanedResponse = attributeResponse
+      .replace(/```(json)?/gi, '')  // remove starting markdown fences (e.g. ```json)
+      .replace(/```/g, '')          // remove ending markdown fences (```)
+      .trim();
+    let attributes = {};
+    try {
+      attributes = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error("Error parsing wine attributes:", parseError);
+      return res.status(500).json({ error: "Error parsing wine attributes." });
+    }
+    console.log("atr", attributes);
+    // Stage 2: Use the returned attributes to filter your bottle collection.
+    // Prepare regular expressions for filtering (if attribute is missing, match everything using /.*/)
+    const wineTypeRegex = attributes.wineType ? new RegExp(attributes.wineType, "i") : /.*/;
+    const regionRegex = attributes.region ? new RegExp(attributes.region, "i") : /.*/;
+    const grapeTypeRegex = attributes.grapeType ? new RegExp(attributes.grapeType, "i") : /.*/;
 
-        const aiResponse = await callOpenAI(prompt); // ✅ Use retry mechanism
-        res.json({ recommendation: aiResponse });
-      })
-      .on("error", (err) => {
-        console.error("CSV Parsing Error:", err);
-        res.status(500).json({ error: "CSV file error." });
-      });
+    // Query your database with the filters on wineType, region, and grapeType.
+    const filteredBottles = await Bottle.find({
+      wineType: { $regex: wineTypeRegex },
+      region: { $regex: regionRegex },
+      grapeType: { $regex: grapeTypeRegex }
+    }, { name: 1 }).limit(50);
+    console.log("filtered", filteredBottles.length)
+    // Map the filtered bottles into an array of objects with id and name.
+    const wineList = filteredBottles
+      .filter(bottle => bottle.name)
+      .map(bottle => ({
+        id: bottle._id.toString(), // Ensure the id is a string
+        name: bottle.name
+      }));
+    console.log("Bottles", wineList)
+    // Convert the wine list array to a JSON string.
+    const wineListJSON = JSON.stringify(wineList, null, 2);
+
+    // Stage 3: Build a final prompt using the filtered list.
+    const finalPrompt = `
+You are an expert sommelier.
+Given the following wine list in JSON format:
+${wineListJSON}
+
+Please recommend the wine most similar to "${bottleName}" based on flavor profile, region, and style.
+Your response should be a valid JSON object with the following structure:
+{
+  "bottleId": "<ID of the recommended bottle>",
+  "bottleName": "<Name of the recommended bottle>",
+  "explanation": "<Brief explanation for the recommendation>"
+}
+and make sure "${bottleName}" ias not part of the recommended response
+Ensure that your output is only this JSON object and nothing else.
+    `;
+
+    // Call OpenAI with the final prompt.
+    const recommendation = await callOpenAI(finalPrompt);
+
+    // Return the final recommendation.
+    res.json({ recommendation });
+
   } catch (error) {
     console.error("Server Error:", error);
     res.status(500).json({ error: "Internal server error." });

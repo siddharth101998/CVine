@@ -65,8 +65,8 @@ const Homepage = () => {
                 params: {
                     q: query,
                     country: selectedCountry,
-                    winetype: selectedWineType,
-                    grapetype: selectedGrapeType
+                    wineType: selectedWineType,
+                    grapeType: selectedGrapeType
                 }
             });
             setSearchResults(response.data.data);
