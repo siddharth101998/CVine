@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { registerUser, loginUser } from "../authService";
 import backgroundVideo from "../assets/login_bg.mp4";
-import logo from "../assets/logo.png"; // Import Logo
+import logo from "../assets/logo.png";
 import {
   Box,
   Container,
@@ -11,24 +11,21 @@ import {
   Button,
   Link,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 
 const AuthForm = () => {
-  // State variables to manage form inputs
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
-  const [isRegister, setIsRegister] = useState(false); // Toggles between Register/Login form
+  const [isRegister, setIsRegister] = useState(false);
   const [error, setError] = useState("");
-  const [showForm, setShowForm] = useState(false); // Controls form & logo visibility after 2.5 seconds
-  const videoRef = useRef(null); // Reference to the video element
+  const [showForm, setShowForm] = useState(false);
+  const videoRef = useRef(null);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const navigate = useNavigate(); // Initialize navigation
-
-  // Effect to control video playback and display form + logo after 2.5 seconds
   useEffect(() => {
     const video = videoRef.current;
 
@@ -36,22 +33,17 @@ const AuthForm = () => {
       video.play();
       const stopVideo = () => {
         if (video.currentTime >= 2.5) {
-          // After 2.5 seconds
           video.pause();
-          video.currentTime = 2.5; // Keep video paused here
-          setShowForm(true); // Show the form & logo
+          video.currentTime = 2.5;
+          setShowForm(true);
         }
       };
 
       video.addEventListener("timeupdate", stopVideo);
-
-      return () => {
-        video.removeEventListener("timeupdate", stopVideo);
-      };
+      return () => video.removeEventListener("timeupdate", stopVideo);
     }
   }, []);
 
-  // Handle input changes in the form
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === "email") setEmail(value);
@@ -59,46 +51,40 @@ const AuthForm = () => {
     else if (name === "firstName") setFirstName(value);
   };
 
-  // Handle form submission for login or register
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      if (!email || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+
       if (isRegister) {
         console.log("pas", password);
         await registerUser(email, password, firstName);
         alert("Registered successfully!");
       } else {
         await loginUser(email, password);
-        console.log("emailk", email)
+
         // Call backend API to get user details from MongoDB
         const res = await axios.post("http://localhost:5002/user/login", {
           email,
+          password,
         });
 
-        // Check if the response is valid
         if (res.status === 200) {
-          // Set the user details in AuthContext
           login(res.data.user);
+          // alert("Logged in successfully!");
+          navigate("/homepage");
         }
-
-        alert("Logged in successfully!");
-        navigate("/homepage");
       }
     } catch (err) {
-      setError(err.message);
+      setError(err?.response?.data?.message || err.message);
     }
   };
 
   return (
-    <Box
-      sx={{
-        position: "relative",
-        width: "100vw",
-        height: "100vh",
-        overflow: "hidden",
-      }}
-    >
-      {/* Background Video */}
+    <Box sx={{ position: "relative", width: "100vw", height: "100vh", overflow: "hidden" }}>
       <video
         ref={videoRef}
         src={backgroundVideo}
@@ -111,11 +97,10 @@ const AuthForm = () => {
           width: "100%",
           height: "100%",
           objectFit: "cover",
-          zIndex: -1, // Keep in background
+          zIndex: -1,
         }}
       />
 
-      {/* Show the login/register form and logo after 2.5 seconds */}
       {showForm && (
         <Box
           sx={{
@@ -123,8 +108,6 @@ const AuthForm = () => {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
             padding: 3,
           }}
         >
@@ -134,15 +117,12 @@ const AuthForm = () => {
               sx={{
                 p: 5,
                 borderRadius: 4,
-                backdropFilter: "blur(10px)", // Frosted glass effect
+                backdropFilter: "blur(10px)",
                 backgroundColor: "rgba(255, 255, 255, 0.2)",
                 boxShadow: "0px 8px 20px rgba(0,0,0,0.3)",
-                color: "black",
                 textAlign: "center",
-                position: "relative",
               }}
             >
-              {/* Logo Appears at the Top */}
               <Box sx={{ textAlign: "center", mb: 2 }}>
                 <img
                   src={logo}
@@ -157,31 +137,17 @@ const AuthForm = () => {
                 />
               </Box>
 
-              {/* Heading */}
-              <Typography
-                variant="h4"
-                component="h1"
-                fontWeight="bold"
-                gutterBottom
-              >
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
                 {isRegister ? "Sign Up" : "Welcome Back!"}
               </Typography>
               <Typography
                 variant="body2"
                 sx={{ mb: 3, fontSize: "1rem", color: "text.secondary" }}
               >
-                {isRegister
-                  ? "Create an account to get started!"
-                  : "Log in to continue"}
+                {isRegister ? "Create an account to get started!" : "Log in to continue"}
               </Typography>
 
-              {/* Form Section */}
-              <Box
-                component="form"
-                onSubmit={handleSubmit}
-                sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-              >
-                {/* Show First Name field only for registration */}
+              <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {isRegister && (
                   <TextField
                     label="First Name"
@@ -193,7 +159,6 @@ const AuthForm = () => {
                     sx={{ backgroundColor: "white", borderRadius: 1 }}
                   />
                 )}
-                {/* Email Field */}
                 <TextField
                   label="Email"
                   variant="outlined"
@@ -204,7 +169,6 @@ const AuthForm = () => {
                   fullWidth
                   sx={{ backgroundColor: "white", borderRadius: 1 }}
                 />
-                {/* Password Field */}
                 <TextField
                   label="Password"
                   variant="outlined"
@@ -215,7 +179,7 @@ const AuthForm = () => {
                   fullWidth
                   sx={{ backgroundColor: "white", borderRadius: 1 }}
                 />
-                {/* Submit Button */}
+
                 <Button
                   variant="contained"
                   color="primary"
@@ -224,19 +188,18 @@ const AuthForm = () => {
                     mt: 2,
                     borderRadius: 2,
                     background: isRegister
-                      ? "linear-gradient(45deg, #722F37, #B22222)" // Wine gradient for Register
-                      : "linear-gradient(45deg, #2E8B57, #3CB371)", // Green gradient for Login
+                      ? "linear-gradient(45deg, #722F37, #B22222)"
+                      : "linear-gradient(45deg, #2E8B57, #3CB371)",
                     "&:hover": {
                       background: isRegister
-                        ? "linear-gradient(45deg, #B22222, #722F37)" // Darker Wine on Hover
-                        : "linear-gradient(45deg, #3CB371, #2E8B57)", // Darker Green on Hover
+                        ? "linear-gradient(45deg, #B22222, #722F37)"
+                        : "linear-gradient(45deg, #3CB371, #2E8B57)",
                     },
                   }}
                 >
                   {isRegister ? "Register" : "Login"}
                 </Button>
 
-                {/* Toggle Between Register and Login */}
                 <Typography variant="body2" sx={{ mt: 2 }}>
                   {isRegister ? (
                     <>
@@ -264,7 +227,6 @@ const AuthForm = () => {
                 </Typography>
               </Box>
 
-              {/* Display error message if any */}
               {error && (
                 <Typography variant="body1" color="error.main" sx={{ mt: 2 }}>
                   {error}
