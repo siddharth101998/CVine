@@ -178,7 +178,7 @@ const Bottle = () => {
                       color: "#673ab7",
                     }}
                   />
-                  Brand: {bottle.winery}
+                  Brand: {bottle.Winery}
                 </Typography>
                 <Typography variant="body1" sx={{ ...commonTypography, fontSize: "1.2rem" }}>
                   <LocalOfferIcon

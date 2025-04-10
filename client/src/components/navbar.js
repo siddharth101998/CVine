@@ -35,7 +35,7 @@ const Navbar = () => {
     // Define left and right navigation items separately
     const leftNavItems = [
         { label: "Home", url: "/homepage" },
-        { label: "Scan Wine", url: "/scan-wine" },
+        { label: "Scan Wine", url: "/chat" },
         { label: "Get Recommendation", url: "/recommend" }
     ];
 

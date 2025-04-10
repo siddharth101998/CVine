@@ -285,69 +285,109 @@ app.post("/process-image", async (req, res) => {
 
     const regexKeywords = keywords.map((word) => new RegExp(word, "i")); // Case-insensitive regex patterns
 
-    // Step 1: Search by name (Highest Priority)
+    // // Step 1: Search by name (Highest Priority)
+    // let matchingWines = await Bottle.find({
+    //   name: { $regex: regexKeywords.join("|"), $options: "i" },
+    // }).limit(10);
+
+    // // Step 2: If no direct name match, search in Winery
+    // if (matchingWines.length === 0) {
+    //   matchingWines = await Bottle.find({
+    //     Winery: { $regex: regexKeywords.join("|"), $options: "i" },
+    //   }).limit(10);
+    // }
+
+    // // Step 3: If no match in name or winery, expand to other fields
+    // if (matchingWines.length === 0) {
+    //   matchingWines = await Bottle.find({
+    //     $or: [
+    //       { region: { $regex: regexKeywords.join("|"), $options: "i" } },
+    //       { grapeType: { $regex: regexKeywords.join("|"), $options: "i" } },
+    //       { country: { $regex: regexKeywords.join("|"), $options: "i" } },
+    //       {
+    //         fullDescription: { $regex: regexKeywords.join("|"), $options: "i" },
+    //       },
+    //     ],
+    //   }).limit(10);
+    // }
+
+    // // Step 4: Score Matches Dynamically Based on Keyword Presence
+    // matchingWines = matchingWines.map((wine) => {
+    //   let score = 0;
+    //   const wineData = [
+    //     { field: "name", value: wine.name, weight: 10 },
+    //     { field: "Winery", value: wine.Winery, weight: 7 },
+    //     { field: "region", value: wine.region, weight: 5 },
+    //     { field: "grapeType", value: wine.grapeType, weight: 4 },
+    //     { field: "country", value: wine.country, weight: 3 },
+    //     { field: "fullDescription", value: wine.fullDescription, weight: 2 },
+    //   ];
+
+    //   wineData.forEach(({ value, weight }) => {
+    //     if (value) {
+    //       const matchCount = keywords.filter((k) =>
+    //         value.toLowerCase().includes(k)
+    //       ).length;
+    //       score += matchCount * weight;
+    //     }
+    //   });
+
+    //   return { ...wine._doc, score };
+    // });
+
+    // // Step 5: Sort by Score & Highest Rating
+    // matchingWines.sort(
+    //   (a, b) => b.score - a.score || b.avgRating - a.avgRating
+    // );
+
+    // console.log("🟢 Final Sorted Matches:", matchingWines);
+    // if (!matchingWines.length) {
+    //   return res
+    //     .status(200)
+    //     .json({ message: "No matching wine found", keywords });
+    // }
+
+    // res.json(matchingWines[0]); // Return the best match/ Return the best match
+
+    // ===== UPDATED MATCHING WINES LOGIC =====
+
+    // Step 1: Search by Winery using all keywords
+    // Remove duplicate keywords to build a more effective regex
+    const uniqueKeywords = [...new Set(keywords)];
+
+    // Build a single regex string that will match if any of the keywords are found in the field text
+    const searchRegex = uniqueKeywords.join("|");
+
+    // Step 1: Search by name or Winery only
     let matchingWines = await Bottle.find({
-      name: { $regex: regexKeywords.join("|"), $options: "i" },
-    }).limit(10);
 
-    // Step 2: If no direct name match, search in Winery
-    if (matchingWines.length === 0) {
-      matchingWines = await Bottle.find({
-        Winery: { $regex: regexKeywords.join("|"), $options: "i" },
-      }).limit(10);
-    }
 
-    // Step 3: If no match in name or winery, expand to other fields
-    if (matchingWines.length === 0) {
-      matchingWines = await Bottle.find({
-        $or: [
-          { region: { $regex: regexKeywords.join("|"), $options: "i" } },
-          { grapeType: { $regex: regexKeywords.join("|"), $options: "i" } },
-          { country: { $regex: regexKeywords.join("|"), $options: "i" } },
-          {
-            fullDescription: { $regex: regexKeywords.join("|"), $options: "i" },
-          },
-        ],
-      }).limit(10);
-    }
+      Winery: { $regex: searchRegex, $options: "i" }
 
-    // Step 4: Score Matches Dynamically Based on Keyword Presence
-    matchingWines = matchingWines.map((wine) => {
-      let score = 0;
-      const wineData = [
-        { field: "name", value: wine.name, weight: 10 },
-        { field: "Winery", value: wine.Winery, weight: 7 },
-        { field: "region", value: wine.region, weight: 5 },
-        { field: "grapeType", value: wine.grapeType, weight: 4 },
-        { field: "country", value: wine.country, weight: 3 },
-        { field: "fullDescription", value: wine.fullDescription, weight: 2 },
-      ];
-
-      wineData.forEach(({ value, weight }) => {
-        if (value) {
-          const matchCount = keywords.filter((k) =>
-            value.toLowerCase().includes(k)
-          ).length;
-          score += matchCount * weight;
-        }
-      });
-
-      return { ...wine._doc, score };
     });
-
-    // Step 5: Sort by Score & Highest Rating
-    matchingWines.sort(
-      (a, b) => b.score - a.score || b.avgRating - a.avgRating
-    );
-
-    console.log("🟢 Final Sorted Matches:", matchingWines);
-    if (!matchingWines.length) {
-      return res
-        .status(200)
-        .json({ message: "No matching wine found", keywords });
+    console.log("mat", matchingWines ? matchingWines[0] : "no wines");
+    // Step 2: If more than one bottle is filtered using name or Winery,
+    // then further refine by filtering based on grapeType.
+    if (matchingWines.length > 1) {
+      const grapeMatches = matchingWines.filter((wine) =>
+        regexKeywords.some((regex) => wine.grapeType && regex.test(wine.grapeType))
+      );
+      // If any bottles match the grapeType criteria, use them as the final set.
+      if (grapeMatches.length > 0) {
+        matchingWines = grapeMatches;
+      }
     }
 
-    res.json(matchingWines[0]); // Return the best match/ Return the best match
+    // After these steps, matchingWines should contain the final candidate(s) based on Winery first,
+    // and if needed, refined by grapeType matching.
+    // Return the best match (first element)
+    if (!matchingWines.length) {
+      return res.status(200).json({ message: "No matching wine found", keywords });
+    }
+
+    //console.log("🟢 Final Sorted Matches:", matchingWines);
+    res.json(matchingWines[0]); // Return the final best match
+
   } catch (error) {
     console.error("Error processing image:", error);
     res.status(500).json({ message: "Error processing image" });
