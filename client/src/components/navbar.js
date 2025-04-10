@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Switch, Box } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import Logo from "../assets/logo.png";
@@ -33,7 +32,22 @@ const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const navItems = ["Home", "Scan Wine", "Wine Library", "Pairing Guide", "About Us", "Login/Register"];
+    // Define left and right navigation items separately
+    const leftNavItems = [
+        { label: "Home", url: "/homepage" },
+        { label: "Scan Wine", url: "/scan-wine" },
+        { label: "Get Recommendation", url: "/recommend" }
+    ];
+
+    const rightNavItems = [
+        { label: "Pairing Guide", url: "/pairing-guide" },
+        { label: "About Us", url: "/about-us" },
+        { label: "Login/Register", url: "/login-register" },
+        { label: "Profile", url: "/profile" }
+    ];
+
+    // For mobile view, show all nav items in order (left + right)
+    const mobileNavItems = [...leftNavItems, ...rightNavItems];
 
     return (
         <>
@@ -54,12 +68,13 @@ const Navbar = () => {
                     <IconButton sx={{ display: { md: "none" }, color: "black" }} onClick={handleDrawerToggle}>
                         <MenuIcon />
                     </IconButton>
-                    
+
                     {/* Navigation Links (Left Side) */}
                     <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-start" }}>
-                        {navItems.slice(0, 3).map((item, index) => (
+                        {leftNavItems.map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
+                                    onClick={() => navigate(item.url)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -69,7 +84,7 @@ const Navbar = () => {
                                         '&:hover': {
                                             color: "#b22222",
                                             fontWeight: "bold",
-                                            fontSize: "1.125rem", // 2pt larger
+                                            fontSize: "1.125rem",
                                         },
                                         '&:hover::after': {
                                             content: '""',
@@ -77,39 +92,45 @@ const Navbar = () => {
                                             bottom: 0,
                                             left: 0,
                                             width: "100%",
-                                            height: "4px", // 2pt larger
+                                            height: "4px",
                                             backgroundColor: "#b22222",
                                         }
                                     }}
                                 >
-                                    {item}
+                                    {item.label}
                                 </Button>
                             </Box>
                         ))}
                     </Box>
-                    
-{/* Logo in the Center */}
-<Box sx={{ 
-    position: "absolute", 
-    left: "50%", 
-    transform: "translateX(-50%)", 
-    '& img': {
-        transition: "transform 0.3s ease-in-out",
-    },
-    '& img:hover': {
-        transform: "scale(1.5)",
-    }
-}}>
-    <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
-</Box>
 
-                    
+                    {/* Logo in the Center */}
+                    <Box sx={{
+                        position: "absolute",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        '& img': {
+                            transition: "transform 0.3s ease-in-out",
+                        },
+                        '& img:hover': {
+                            transform: "scale(1.5)",
+                        }
+                    }}>
+                        <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
+                    </Box>
+
                     {/* Navigation Links (Right Side) */}
-                    <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-end" }}>
-                        {navItems.slice(3).map((item, index) => (
+                    <Box
+                        sx={{
+                            display: { xs: "none", md: "flex" },
+                            gap: 6,
+                            flexGrow: 1,
+                            justifyContent: "flex-end",
+                        }}
+                    >
+                        {rightNavItems.map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
-                                    onClick={() => item === "Login/Register" && navigate("/login_register")}
+                                    onClick={() => navigate(item.url)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -119,7 +140,7 @@ const Navbar = () => {
                                         '&:hover': {
                                             color: "#b22222",
                                             fontWeight: "bold",
-                                            fontSize: "1.125rem", // 2pt larger
+                                            fontSize: "1.125rem",
                                         },
                                         '&:hover::after': {
                                             content: '""',
@@ -127,12 +148,12 @@ const Navbar = () => {
                                             bottom: 0,
                                             left: 0,
                                             width: "100%",
-                                            height: "4px", // 2pt larger
+                                            height: "4px",
                                             backgroundColor: "#b22222",
-                                        }
+                                        },
                                     }}
                                 >
-                                    {item}
+                                    {item.label}
                                 </Button>
                             </Box>
                         ))}
@@ -143,9 +164,16 @@ const Navbar = () => {
             {/* Mobile Drawer */}
             <Drawer anchor="left" open={mobileOpen} onClose={handleDrawerToggle}>
                 <List>
-                    {navItems.map((item, index) => (
-                        <ListItem button key={index} onClick={() => { handleDrawerToggle(); if (item === "Login/Register") navigate("/login_register"); }}>
-                            <ListItemText primary={item} />
+                    {mobileNavItems.map((item, index) => (
+                        <ListItem
+                            button
+                            key={index}
+                            onClick={() => {
+                                handleDrawerToggle();
+                                navigate(item.url);
+                            }}
+                        >
+                            <ListItemText primary={item.label} />
                         </ListItem>
                     ))}
                 </List>

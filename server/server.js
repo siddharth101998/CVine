@@ -100,87 +100,161 @@ app.post("/api/chat", async (req, res) => {
 // Wine Recommendation Route
 app.post("/api/recommend", async (req, res) => {
   try {
-    const { bottleName } = req.body;
-    if (!bottleName) {
-      return res.status(400).json({ error: "Bottle name is required." });
+    // Expect an array of bottle names from the client's request body.
+    // For example: { selectedBottles: ["Wine A", "Wine B", ...] }
+    const { selectedBottles } = req.body;
+    if (!selectedBottles || !Array.isArray(selectedBottles) || selectedBottles.length === 0) {
+      return res.status(400).json({ error: "At least one bottle name is required." });
     }
 
-    // Stage 1: Get the wine attributes for the given bottle name.
+    // Limit to a maximum of 20 bottles.
+    const inputBottleNames = selectedBottles.slice(0, 20);
+
+    // ======= Stage 1: Get Wine Attributes for Each Input Bottle =======
+    // Instead of aggregating into one taste category, ask for a per-bottle breakdown.
     const attributePrompt = `
 You are an expert sommelier.
-Given the wine name "${bottleName}", please provide the most likely wine attributes in the following JSON format:
+Given the following list of wine bottle names:
+${JSON.stringify(inputBottleNames, null, 2)}
+You will receive a list of wine names. For each name, identify the most likely:
+
+- wineType: one of “Red wine”, “White wine”, “Dessert wine”, “Sparkling wine”, “Rosé wine”
+- region: just the appellation (e.g. “Napa Valley”)
+- grapeType: the primary grape variety (e.g. “Cabernet Sauvignon”)
+
+Output a single JSON object with exactly one key, "preferences", whose value is an array of objects, each matching this schema:
+
 {
   "wineType": "<wine type>",
   "region": "<region>",
   "grapeType": "<grape type>"
 }
-Where wine types are "Red wine", "White wine", "Desert wine", "Sparkling wine", "Rose wine".
-For region, for example, it should be just "Napa Valley" and not "Napa Valley, California".
-Ensure that your output is a valid JSON object with only these keys and nothing else.
-`;
+
+Deduplicate entries: if two or more wines resolve to identical triplets, include that combination only once.
+
+**Do not** output anything besides this JSON. No explanations, no extra keys.  `;
 
     const attributeResponse = await callOpenAI(attributePrompt);
-    console.log("atrRES", attributeResponse);
+    console.log("Attribute Response:", attributeResponse);
 
-    // Remove potential markdown formatting (e.g. triple backticks)
-    const cleanedResponse = attributeResponse
-      .replace(/```(json)?/gi, '')  // remove starting markdown fences (e.g. ```json)
-      .replace(/```/g, '')          // remove ending markdown fences (```)
+    // Remove potential markdown formatting (e.g., triple backticks)
+    const cleanedAttrResponse = attributeResponse
+      .replace(/```(json)?/gi, "")
+      .replace(/```/g, "")
       .trim();
-    let attributes = {};
+
+    let attributesResult = {};
     try {
-      attributes = JSON.parse(cleanedResponse);
+      attributesResult = JSON.parse(cleanedAttrResponse);
     } catch (parseError) {
       console.error("Error parsing wine attributes:", parseError);
       return res.status(500).json({ error: "Error parsing wine attributes." });
     }
-    console.log("atr", attributes);
-    // Stage 2: Use the returned attributes to filter your bottle collection.
-    // Prepare regular expressions for filtering (if attribute is missing, match everything using /.*/)
-    const wineTypeRegex = attributes.wineType ? new RegExp(attributes.wineType, "i") : /.*/;
-    const regionRegex = attributes.region ? new RegExp(attributes.region, "i") : /.*/;
-    const grapeTypeRegex = attributes.grapeType ? new RegExp(attributes.grapeType, "i") : /.*/;
 
-    // Query your database with the filters on wineType, region, and grapeType.
-    const filteredBottles = await Bottle.find({
-      wineType: { $regex: wineTypeRegex },
-      region: { $regex: regionRegex },
-      grapeType: { $regex: grapeTypeRegex }
-    }, { name: 1 }).limit(50);
-    console.log("filtered", filteredBottles.length)
-    // Map the filtered bottles into an array of objects with id and name.
-    const wineList = filteredBottles
-      .filter(bottle => bottle.name)
-      .map(bottle => ({
-        id: bottle._id.toString(), // Ensure the id is a string
-        name: bottle.name
-      }));
-    console.log("Bottles", wineList)
-    // Convert the wine list array to a JSON string.
-    const wineListJSON = JSON.stringify(wineList, null, 2);
+    // Expecting an object with key "preferences" which is an array.
+    if (
+      !attributesResult.preferences ||
+      !Array.isArray(attributesResult.preferences) ||
+      attributesResult.preferences.length === 0
+    ) {
+      return res.status(500).json({ error: "No wine attributes returned." });
+    }
 
-    // Stage 3: Build a final prompt using the filtered list.
+    const preferences = attributesResult.preferences;
+    console.log("Parsed Preferences:", preferences);
+
+    // ======= Stage 2: Query the Database for Candidate Bottles =======
+    // Aim to select a total of 50 candidate bottles, distributed equally across the provided preferences.
+    const numPreferences = preferences.length;
+    const bottlesPerPreference = Math.floor(50 / numPreferences);
+    let candidateBottles = [];
+
+    for (const pref of preferences) {
+      const wineTypeRegex = pref.wineType ? new RegExp(pref.wineType, "i") : /.*/;
+      const regionRegex = pref.region ? new RegExp(pref.region, "i") : /.*/;
+      const grapeTypeRegex = pref.grapeType ? new RegExp(pref.grapeType, "i") : /.*/;
+
+      // Query your Bottle collection filtering by wineType, region, and grapeType.
+      const bottlesForPref = await Bottle.find(
+        {
+          wineType: { $regex: wineTypeRegex },
+          region: { $regex: regionRegex },
+          grapeType: { $regex: grapeTypeRegex }
+        },
+        { name: 1, imageUrl: 1 }    // ← also fetch imageUrl
+      ).limit(bottlesPerPreference);
+
+      const formattedBottles = bottlesForPref
+        .filter(bottle => bottle.name)
+        .map(bottle => ({
+          id: bottle._id.toString(),
+          name: bottle.name,
+          imageUrl: bottle.imageUrl
+        }));
+
+      candidateBottles = candidateBottles.concat(formattedBottles);
+    }
+
+    // If fewer than 50 candidates were collected, fill in with additional bottles from the entire collection.
+    if (candidateBottles.length < 50) {
+      const additionalCount = 50 - candidateBottles.length;
+      const extraBottles = await Bottle.find({}, { name: 1, imageUrl: 1 }).limit(additionalCount);
+      candidateBottles = candidateBottles.concat(
+        extraBottles.map(bottle => ({
+          id: bottle._id.toString(),
+          name: bottle.name,
+          imageUrl: bottle.imageUrl
+        }))
+      );
+    }
+    console.log("Total Candidate Bottles:", candidateBottles.length);
+
+    const candidateJSON = JSON.stringify(candidateBottles, null, 2);
+
+    // ======= Stage 3: Final Recommendation Prompt =======
     const finalPrompt = `
 You are an expert sommelier.
-Given the following wine list in JSON format:
-${wineListJSON}
+Based on the extracted attributes for the input wines, consider the following candidate wines:
+${candidateJSON}
 
-Please recommend the wine most similar to "${bottleName}" based on flavor profile, region, and style.
-Your response should be a valid JSON object with the following structure:
-{
-  "bottleId": "<ID of the recommended bottle>",
-  "bottleName": "<Name of the recommended bottle>",
-  "explanation": "<Brief explanation for the recommendation>"
-}
-and make sure "${bottleName}" ias not part of the recommended response
-Ensure that your output is only this JSON object and nothing else.
+Please recommend 10 bottles from this candidate list that best represent a balanced selection across the different taste preferences.
+ Return your answer as a valid JSON array of objects, each with:
+ {
+   "bottleId":   "<ID of the recommended bottle>",
+   "bottleName": "<Name of the recommended bottle>",
+   "explanation":"<Brief explanation for why it matches the user’s tastes>"
+ }and for explanation - explain why they are similar to bottles in the  ${JSON.stringify(inputBottleNames, null, 2)} and respond in a way user understand why this was recomended
+Also ensure that none of the input wine names are recommended.
+Ensure that your output is only this JSON array and nothing else.
     `;
 
-    // Call OpenAI with the final prompt.
-    const recommendation = await callOpenAI(finalPrompt);
+    const finalRecommendation = await callOpenAI(finalPrompt);
+    const cleanedFinalRecommendation = finalRecommendation
+      .replace(/```(json)?/gi, "")
+      .replace(/```/g, "")
+      .trim();
 
-    // Return the final recommendation.
-    res.json({ recommendation });
+    let recommendations;
+    try {
+      recommendations = JSON.parse(cleanedFinalRecommendation);
+
+
+    } catch (error) {
+      console.error("Error parsing final recommendations:", error);
+      return res.status(500).json({ error: "Error parsing final recommendations." });
+    }
+    const enriched = recommendations.map(rec => {
+      const match = candidateBottles.find(b => b.id === rec.bottleId);
+      return {
+        bottleId: rec.bottleId,
+        bottleName: rec.bottleName,
+        imageUrl: match ? match.imageUrl : null,
+        explanation: rec.explanation
+      };
+    });
+    console.log("recommendations", enriched)
+    // Return the final recommendations.
+    res.json({ recommendations: enriched });
 
   } catch (error) {
     console.error("Server Error:", error);
