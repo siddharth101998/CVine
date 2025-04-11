@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Switch, Box } from "@mui/material";
+import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import SearchIcon from "@mui/icons-material/Search";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import Logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
+    const { user } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
 
@@ -17,23 +16,55 @@ const Navbar = () => {
         setMobileOpen(!mobileOpen);
     };
 
-    const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
-    };
-
     useEffect(() => {
         const handleScroll = () => {
-            if (window.scrollY > 50) {
-                setIsScrolled(true);
-            } else {
-                setIsScrolled(false);
-            }
+            setIsScrolled(window.scrollY > 50);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    const navItems = ["Home", "Scan Wine", "Wine Library", "Pairing Guide", "About Us", "Login/Register"];
+    // Use user's name if logged in, otherwise show "Login/Register"
+    const lastNavItem = user ? user.name : "Login/Register";
+    const navItems = [
+        "Home",
+        "Chatbot",
+        "Recipe",
+        "Pairing Guide",
+        "About",
+        lastNavItem
+    ];
+
+    // Navigation logic for each button.
+    const handleNavClick = (item) => {
+        if (item === lastNavItem) {
+            if (user) {
+                navigate("/profile");
+            } else {
+                navigate("/login_register");
+            }
+        } else {
+            switch (item) {
+                case "Home":
+                    navigate("/");
+                    break;
+                case "Chatbot":
+                    navigate("/chat");
+                    break;
+                case "Recipe":
+                    navigate("/recipe");
+                    break;
+                case "Pairing Guide":
+                    navigate("/pairing-guide");
+                    break;
+                case "About":
+                    navigate("/about");
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     return (
         <>
@@ -54,12 +85,21 @@ const Navbar = () => {
                     <IconButton sx={{ display: { md: "none" }, color: "black" }} onClick={handleDrawerToggle}>
                         <MenuIcon />
                     </IconButton>
-                    
+
                     {/* Navigation Links (Left Side) */}
-                    <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-start" }}>
+                    <Box
+                        sx={{
+                            display: { xs: "none", md: "flex" },
+                            gap: 6,
+                            flexGrow: 1,
+                            justifyContent: "flex-start",
+                            zIndex: 2 // ensure these are above the logo
+                        }}
+                    >
                         {navItems.slice(0, 3).map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
+                                    onClick={() => handleNavClick(item)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -69,7 +109,7 @@ const Navbar = () => {
                                         '&:hover': {
                                             color: "#b22222",
                                             fontWeight: "bold",
-                                            fontSize: "1.125rem", // 2pt larger
+                                            fontSize: "1.125rem",
                                         },
                                         '&:hover::after': {
                                             content: '""',
@@ -77,7 +117,7 @@ const Navbar = () => {
                                             bottom: 0,
                                             left: 0,
                                             width: "100%",
-                                            height: "4px", // 2pt larger
+                                            height: "4px",
                                             backgroundColor: "#b22222",
                                         }
                                     }}
@@ -87,29 +127,39 @@ const Navbar = () => {
                             </Box>
                         ))}
                     </Box>
-                    
-{/* Logo in the Center */}
-<Box sx={{ 
-    position: "absolute", 
-    left: "50%", 
-    transform: "translateX(-50%)", 
-    '& img': {
-        transition: "transform 0.3s ease-in-out",
-    },
-    '& img:hover': {
-        transform: "scale(1.5)",
-    }
-}}>
-    <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
-</Box>
 
-                    
+                    {/* Logo in the Center */}
+                    <Box
+                        sx={{
+                            position: "absolute",
+                            left: "50%",
+                            transform: "translateX(-50%)",
+                            zIndex: 1, // logo sits behind the buttons
+                            '& img': {
+                                transition: "transform 0.3s ease-in-out",
+                            },
+                            '& img:hover': {
+                                transform: "scale(1.5)",
+                            }
+                        }}
+                    >
+                        <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
+                    </Box>
+
                     {/* Navigation Links (Right Side) */}
-                    <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-end" }}>
+                    <Box
+                        sx={{
+                            display: { xs: "none", md: "flex" },
+                            gap: 6,
+                            justifyContent: "flex-end",
+                            zIndex: 3, // bring these to the front
+                            mr: 2 // optional: add some right margin for spacing
+                        }}
+                    >
                         {navItems.slice(3).map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
-                                    onClick={() => item === "Login/Register" && navigate("/login_register")}
+                                    onClick={() => handleNavClick(item)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -119,7 +169,7 @@ const Navbar = () => {
                                         '&:hover': {
                                             color: "#b22222",
                                             fontWeight: "bold",
-                                            fontSize: "1.125rem", // 2pt larger
+                                            fontSize: "1.125rem",
                                         },
                                         '&:hover::after': {
                                             content: '""',
@@ -127,7 +177,7 @@ const Navbar = () => {
                                             bottom: 0,
                                             left: 0,
                                             width: "100%",
-                                            height: "4px", // 2pt larger
+                                            height: "4px",
                                             backgroundColor: "#b22222",
                                         }
                                     }}
@@ -144,7 +194,14 @@ const Navbar = () => {
             <Drawer anchor="left" open={mobileOpen} onClose={handleDrawerToggle}>
                 <List>
                     {navItems.map((item, index) => (
-                        <ListItem button key={index} onClick={() => { handleDrawerToggle(); if (item === "Login/Register") navigate("/login_register"); }}>
+                        <ListItem
+                            button
+                            key={index}
+                            onClick={() => {
+                                handleDrawerToggle();
+                                handleNavClick(item);
+                            }}
+                        >
                             <ListItemText primary={item} />
                         </ListItem>
                     ))}

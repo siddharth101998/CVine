@@ -264,6 +264,16 @@ const Homepage = () => {
           )}
         </Box>
       </Box>
+
+      {/* Navigation Buttons */}
+      <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
+        <Button variant="contained" onClick={() => navigate("/profile")}>
+          User Profile
+        </Button>
+        <Button variant="contained" onClick={() => navigate("/recipe")}>
+          Recipes
+        </Button>
+      </Box>
     </Container>
   );
 };

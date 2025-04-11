@@ -9,7 +9,7 @@ router.post("/login", UserController.loginUser)
 router.get("/:id", UserController.getUserProfile)
 router.post("/", UserController.createUser);
 router.put("/:id", UserController.updateUser)
-router.put("/logcount/:id", UserController.incrementLoginCount)
+// router.put("/logcount/:id", UserController.incrementLoginCount)
 
 
 

@@ -8,22 +8,24 @@ import axios from "axios"; // Import Axios
 import { useAuth } from "./context/AuthContext";
 // Register User
 
-export const registerUser = async (name, email, password) => {
+export const registerUser = async (email, password, firstName) => {
   try {
+    console.log("register started", password);
     const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password
     );
     const user = userCredential.user;
-
+    console.log(" firebase register finsihed");
     // Call backend API to create the user in MongoDB
-    await axios.post("http://localhost:5002/user/", {
+    const res = await axios.post("http://localhost:5002/user/", {
       email,
       password,
+      firstName
     });
 
-    return user;
+    return res.data.data;
   } catch (error) {
     throw error;
   }
