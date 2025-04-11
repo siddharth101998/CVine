@@ -130,7 +130,7 @@ const Bottle = () => {
                 {/* Bottle Name above the image */}
                 <Typography
                   variant="h4"
-                  sx={{ ...commonTypography, fontSize: "2.5rem", fontWeight: "bold", cursor:"pointer" }}
+                  sx={{ ...commonTypography, fontSize: "2.5rem", fontWeight: "bold", cursor: "pointer" }}
                 >
                   {bottle.name}
                 </Typography>
@@ -154,14 +154,14 @@ const Bottle = () => {
                       animation: `${rotateAnimation} 1s ease-out 1 forwards`,
                       transition: "transform 0.3s ease",
                       "&:hover": { transform: "scale(1.05)" },
-                      cursor:"pointer"
+                      cursor: "pointer"
                     }}
                   />
                 </Box>
               </Box>
 
               {/* Right Column: Bottle Details without a background card */}
-              <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column", gap: 4, cursor:"pointer" }}>
+              <Box sx={{ flex: 1, p: 2, display: "flex", flexDirection: "column", gap: 4, cursor: "pointer" }}>
                 <Typography variant="h6" sx={{ ...commonTypography, fontSize: "1.5rem" }}>
                   <WineBarIcon
                     sx={{
@@ -178,7 +178,7 @@ const Bottle = () => {
                       color: "#673ab7",
                     }}
                   />
-                  Brand: {bottle.winery}
+                  Brand: {bottle.Winery}
                 </Typography>
                 <Typography variant="body1" sx={{ ...commonTypography, fontSize: "1.2rem" }}>
                   <LocalOfferIcon
@@ -246,7 +246,7 @@ const Bottle = () => {
                   fontSize: "1.2rem",
                   fontWeight: "bold",
                   color: "#333",
-                  cursor:"pointer",
+                  cursor: "pointer",
                 }}
               >
                 <InfoIcon

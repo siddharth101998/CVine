@@ -9,7 +9,7 @@ import Dashboard from "./components/admin/dashboard";
 import Recipe from "./components/recipe/recipe";
 import { AuthProvider } from "./context/AuthContext";
 import UserProfile from "./components/user/userprofile";
-
+import WineRecommendation from "./components/chat/recommendation";
 // Layout component that includes the Navbar
 const MainLayout = () => {
     return (
@@ -37,6 +37,7 @@ function App() {
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/recipe" element={<Recipe />} />
                         <Route path="/profile" element={<UserProfile />} />
+                        <Route path="/recommend" element={<WineRecommendation />} />
                     </Route>
                 </Routes>
             </Router>

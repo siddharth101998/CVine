@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import Logo from "../assets/logo.png";
 import { useAuth } from "../context/AuthContext";
@@ -24,47 +25,22 @@ const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Use user's name if logged in, otherwise show "Login/Register"
-    const lastNavItem = user ? user.name : "Login/Register";
-    const navItems = [
-        "Home",
-        "Chatbot",
-        "Recipe",
-        "Pairing Guide",
-        "About",
-        lastNavItem
+    // Define left and right navigation items separately
+    const leftNavItems = [
+        { label: "Home", url: "/homepage" },
+        { label: "Scan Wine", url: "/chat" },
+        { label: "Get Recommendation", url: "/recommend" }
     ];
 
-    // Navigation logic for each button.
-    const handleNavClick = (item) => {
-        if (item === lastNavItem) {
-            if (user) {
-                navigate("/profile");
-            } else {
-                navigate("/login_register");
-            }
-        } else {
-            switch (item) {
-                case "Home":
-                    navigate("/");
-                    break;
-                case "Chatbot":
-                    navigate("/chat");
-                    break;
-                case "Recipe":
-                    navigate("/recipe");
-                    break;
-                case "Pairing Guide":
-                    navigate("/pairing-guide");
-                    break;
-                case "About":
-                    navigate("/about");
-                    break;
-                default:
-                    break;
-            }
-        }
-    };
+    const rightNavItems = [
+        { label: "Pairing Guide", url: "/pairing-guide" },
+        { label: "About Us", url: "/about-us" },
+        { label: "Login/Register", url: "/login-register" },
+        { label: "Profile", url: "/profile" }
+    ];
+
+    // For mobile view, show all nav items in order (left + right)
+    const mobileNavItems = [...leftNavItems, ...rightNavItems];
 
     return (
         <>
@@ -87,19 +63,11 @@ const Navbar = () => {
                     </IconButton>
 
                     {/* Navigation Links (Left Side) */}
-                    <Box
-                        sx={{
-                            display: { xs: "none", md: "flex" },
-                            gap: 6,
-                            flexGrow: 1,
-                            justifyContent: "flex-start",
-                            zIndex: 2 // ensure these are above the logo
-                        }}
-                    >
-                        {navItems.slice(0, 3).map((item, index) => (
+                    <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-start" }}>
+                        {leftNavItems.map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
-                                    onClick={() => handleNavClick(item)}
+                                    onClick={() => navigate(item.url)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -122,27 +90,24 @@ const Navbar = () => {
                                         }
                                     }}
                                 >
-                                    {item}
+                                    {item.label}
                                 </Button>
                             </Box>
                         ))}
                     </Box>
 
                     {/* Logo in the Center */}
-                    <Box
-                        sx={{
-                            position: "absolute",
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            zIndex: 1, // logo sits behind the buttons
-                            '& img': {
-                                transition: "transform 0.3s ease-in-out",
-                            },
-                            '& img:hover': {
-                                transform: "scale(1.5)",
-                            }
-                        }}
-                    >
+                    <Box sx={{
+                        position: "absolute",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        '& img': {
+                            transition: "transform 0.3s ease-in-out",
+                        },
+                        '& img:hover': {
+                            transform: "scale(1.5)",
+                        }
+                    }}>
                         <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
                     </Box>
 
@@ -151,15 +116,14 @@ const Navbar = () => {
                         sx={{
                             display: { xs: "none", md: "flex" },
                             gap: 6,
+                            flexGrow: 1,
                             justifyContent: "flex-end",
-                            zIndex: 3, // bring these to the front
-                            mr: 2 // optional: add some right margin for spacing
                         }}
                     >
-                        {navItems.slice(3).map((item, index) => (
+                        {rightNavItems.map((item, index) => (
                             <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
                                 <Button
-                                    onClick={() => handleNavClick(item)}
+                                    onClick={() => navigate(item.url)}
                                     sx={{
                                         color: "black",
                                         textTransform: "none",
@@ -179,10 +143,10 @@ const Navbar = () => {
                                             width: "100%",
                                             height: "4px",
                                             backgroundColor: "#b22222",
-                                        }
+                                        },
                                     }}
                                 >
-                                    {item}
+                                    {item.label}
                                 </Button>
                             </Box>
                         ))}
@@ -193,16 +157,16 @@ const Navbar = () => {
             {/* Mobile Drawer */}
             <Drawer anchor="left" open={mobileOpen} onClose={handleDrawerToggle}>
                 <List>
-                    {navItems.map((item, index) => (
+                    {mobileNavItems.map((item, index) => (
                         <ListItem
                             button
                             key={index}
                             onClick={() => {
                                 handleDrawerToggle();
-                                handleNavClick(item);
+                                navigate(item.url);
                             }}
                         >
-                            <ListItemText primary={item} />
+                            <ListItemText primary={item.label} />
                         </ListItem>
                     ))}
                 </List>

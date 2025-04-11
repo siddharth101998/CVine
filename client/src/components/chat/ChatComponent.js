@@ -25,16 +25,31 @@ function ChatComponent() {
         }
     };
 
-    // Function to recommend wine
     const recommendWine = async () => {
-        if (!bottleName) {
-            alert("Please enter a bottle name.");
+        // Sample input: an array of 10 bottle names
+        const selectedBottles = [
+            "Opus One 2015",
+            "Chateau Margaux 2016",
+            "Silver Oak Cabernet Sauvignon 2018",
+            "Cloudy Bay Sauvignon Blanc 2019",
+            "Antinori Tignanello 2017",
+            "Beringer Private Reserve 2014",
+            "Penfolds Grange 2013",
+            "Cakebread Cellars Chardonnay 2018",
+            "Screaming Eagle Cabernet Sauvignon 2012",
+            "Domaine de la Romanee-Conti 2015"
+        ];
+
+        if (!selectedBottles || selectedBottles.length === 0) {
+            alert("Please provide at least one bottle.");
             return;
         }
 
         try {
-            const res = await axios.post("http://localhost:5002/api/recommend", { bottleName });
-            setRecommendation(res.data.recommendation);
+            const res = await axios.post("http://localhost:5002/api/recommend", { selectedBottles });
+            // Assuming your backend returns recommendations under res.data.recommendations
+            const recommendationsAsString = JSON.stringify(res.data.recommendations, null, 2);
+            setRecommendation(recommendationsAsString);
         } catch (error) {
             console.error("Error fetching recommendation:", error);
             setRecommendation("Error getting wine recommendation.");
@@ -145,7 +160,8 @@ function ChatComponent() {
                             Recommend
                         </Button>
                         <Typography variant="body1" sx={{ marginTop: 2 }}>
-                            <strong>Recommended Wine:</strong> {recommendation}
+                            <strong>Recommended Wine:</strong>
+                            <pre>{recommendation}</pre>
                         </Typography>
                     </Paper>
                 </Grid>

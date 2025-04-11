@@ -59,7 +59,7 @@ const getBottleById = async (req, res) => {
 const searchbottle = async (req, res) => {
     try {
         const query = req.query.q; // Search term
-        const { country, winetype, grapetype } = req.query; // Extract filters from query params
+        const { country, wineType, grapeType } = req.query; // Extract filters from query params
 
         if (!query) return res.json({ success: true, data: [] });
 
@@ -67,8 +67,8 @@ const searchbottle = async (req, res) => {
         let filter = {};
 
         if (country) filter.country = country;
-        if (winetype) filter.winetype = winetype;
-        if (grapetype) filter.grapetype = grapetype;
+        if (wineType) filter.wineType = wineType;
+        if (grapeType) filter.grapeType = grapeType;
 
         // Fetch relevant bottles from DB with filters (limit to 50 for performance)
         const bottles = await Bottle.find(filter, "name winery country winetype grapetype").limit(50);
