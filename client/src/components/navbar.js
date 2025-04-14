@@ -25,19 +25,25 @@ const Navbar = () => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Define left and right navigation items separately
+    // Define left navigation items (static)
     const leftNavItems = [
         { label: "Home", url: "/homepage" },
         { label: "Scan Wine", url: "/chat" },
         { label: "Get Recommendation", url: "/recommend" }
     ];
 
+    // Define right navigation items that are always present
     const rightNavItems = [
         { label: "Pairing Guide", url: "/pairing-guide" },
-        { label: "About Us", url: "/about-us" },
-        { label: "Login/Register", url: "/login-register" },
-        { label: "Profile", url: "/profile" }
+        { label: "About Us", url: "/about-us" }
     ];
+
+    // Conditionally add the login or profile button based on the user status
+    if (user) {
+        rightNavItems.push({ label: "Profile", url: "/profile" });
+    } else {
+        rightNavItems.push({ label: "Login/Register", url: "/login_register" });
+    }
 
     // For mobile view, show all nav items in order (left + right)
     const mobileNavItems = [...leftNavItems, ...rightNavItems];
