@@ -261,10 +261,9 @@ Ensure that your output is only this JSON array and nothing else.
     res.status(500).json({ error: "Internal server error." });
   }
 });
-
 app.post("/process-image", async (req, res) => {
   try {
-    console.log("proces started");
+    console.log("Process started");
     const { imageUrl } = req.body;
     console.log(imageUrl);
     if (!imageUrl)
@@ -274,125 +273,277 @@ app.post("/process-image", async (req, res) => {
     const [result] = await client.textDetection(imageUrl);
     const detections = result.textAnnotations;
     const text = detections.length ? detections[0].description : "";
-
     console.log("✅ Extracted Text:", text);
-    const keywords = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s]/g, "")
-      .split(/\s+/)
-      .filter((word) => word.length > 3);
-    console.log("🔎 Keywords extracted:", keywords);
 
-    const regexKeywords = keywords.map((word) => new RegExp(word, "i")); // Case-insensitive regex patterns
+    // const keywords = text
+    //   .toLowerCase()
+    //   .replace(/[^a-z0-9\s]/g, "")
+    //   .split(/\s+/)
+    //   .filter((word) => word.length > 3);
+    // console.log("🔎 Keywords extracted:", keywords);
 
-    // // Step 1: Search by name (Highest Priority)
-    // let matchingWines = await Bottle.find({
-    //   name: { $regex: regexKeywords.join("|"), $options: "i" },
-    // }).limit(10);
+    // ---------- Step 1: Extract Wine Attributes Using GPT ----------
 
-    // // Step 2: If no direct name match, search in Winery
-    // if (matchingWines.length === 0) {
-    //   matchingWines = await Bottle.find({
-    //     Winery: { $regex: regexKeywords.join("|"), $options: "i" },
-    //   }).limit(10);
-    // }
+    // Build a prompt to extract structured attributes from the keywords.
+    // We ask GPT, acting as an expert sommelier, to return only relevant attributes.
+    const attributePrompt = `
+You are an expert sommelier and global wine researcher.
 
-    // // Step 3: If no match in name or winery, expand to other fields
-    // if (matchingWines.length === 0) {
-    //   matchingWines = await Bottle.find({
-    //     $or: [
-    //       { region: { $regex: regexKeywords.join("|"), $options: "i" } },
-    //       { grapeType: { $regex: regexKeywords.join("|"), $options: "i" } },
-    //       { country: { $regex: regexKeywords.join("|"), $options: "i" } },
-    //       {
-    //         fullDescription: { $regex: regexKeywords.join("|"), $options: "i" },
-    //       },
-    //     ],
-    //   }).limit(10);
-    // }
+Below is OCR-extracted text from a wine label:
 
-    // // Step 4: Score Matches Dynamically Based on Keyword Presence
-    // matchingWines = matchingWines.map((wine) => {
-    //   let score = 0;
-    //   const wineData = [
-    //     { field: "name", value: wine.name, weight: 10 },
-    //     { field: "Winery", value: wine.Winery, weight: 7 },
-    //     { field: "region", value: wine.region, weight: 5 },
-    //     { field: "grapeType", value: wine.grapeType, weight: 4 },
-    //     { field: "country", value: wine.country, weight: 3 },
-    //     { field: "fullDescription", value: wine.fullDescription, weight: 2 },
-    //   ];
+${text}
 
-    //   wineData.forEach(({ value, weight }) => {
-    //     if (value) {
-    //       const matchCount = keywords.filter((k) =>
-    //         value.toLowerCase().includes(k)
-    //       ).length;
-    //       score += matchCount * weight;
-    //     }
-    //   });
+Your job is to identify the **correct wine** these keywords most likely refer to and return its key attributes as a valid **JSON object**.
 
-    //   return { ...wine._doc, score };
-    // });
+You must:
+- Interpret fragmented, partial, or unordered text.
+- Reconstruct the **correct wine name**, even if it appears in parts (e.g., "É TAIN", "ERM", "EX VOTO").
+- Use your complete knowledge of global wines to **identify the winery**, even if it is not explicitly mentioned in the text. (e.g., recognize that "M. Etain" is produced by "Scarecrow", or that "Clio" is from "Bodegas El Nido").
+- Infer the most likely **grape variety** based on known associations (e.g., region, wine name, or winery).
 
-    // // Step 5: Sort by Score & Highest Rating
-    // matchingWines.sort(
-    //   (a, b) => b.score - a.score || b.avgRating - a.avgRating
-    // );
+Output **only** a valid JSON object with exactly the following structure. No commentary, no explanation, no extra keys.
 
-    // console.log("🟢 Final Sorted Matches:", matchingWines);
-    // if (!matchingWines.length) {
-    //   return res
-    //     .status(200)
-    //     .json({ message: "No matching wine found", keywords });
-    // }
+The JSON object must contain **exactly** these keys:
+- "winery": string | null — The full name of the winery (pure text only; remove any accented or special characters like “ô”)
+- "name": string | null — The full name of the wine (reconstructed if fragmented)
+- "grapeType": string | null — The primary grape variety (e.g., "Cabernet Sauvignon", "Monastrell", etc.)
 
-    // res.json(matchingWines[0]); // Return the best match/ Return the best match
+Strict output rules:
+	•	Remove any special characters (e.g., “ô”, accents) in winery and name.
+	•	Use null only if a value cannot be confidently identified.
+	•	Output must be strictly valid JSON and contain no other content.`;
 
-    // ===== UPDATED MATCHING WINES LOGIC =====
+    // Use your GPT request function (similar to your /api/chat route) to get the attributes.
+    // You can reuse your callOpenAI function if it's in scope.
+    const rawattributeResponse = await callOpenAI(attributePrompt);
+    //console.log("GPT Attribute Response:", rawattributeResponse);
+    let attributeResponse = rawattributeResponse
+      .replace(/```(json)?/g, "")
+      .replace(/```/g, "")
+      .trim();
+    console.log("GPT Attribute Response:", attributeResponse);
+    // Parse the response (ensure it returns valid JSON)
+    let wineAttributes = {};
+    try {
+      wineAttributes = JSON.parse(attributeResponse);
+    } catch (parseError) {
+      console.error("Error parsing wine attributes from GPT:", parseError);
+      // In case of an error, you can fallback to a default empty object or simple regex search.
+      wineAttributes = {};
+    }
 
-    // Step 1: Search by Winery using all keywords
-    // Remove duplicate keywords to build a more effective regex
-    const uniqueKeywords = [...new Set(keywords)];
+    console.log("Extracted Wine Attributes:", wineAttributes);
 
-    // Build a single regex string that will match if any of the keywords are found in the field text
-    const searchRegex = uniqueKeywords.join("|");
+    if (!wineAttributes || !wineAttributes.winery) {
+      console.log("No valid winery extracted. Falling back to fuzzy search.");
+      wineAttributes = { winery: fuzzyRegex };
+    }
 
-    // Step 1: Search by name or Winery only
+    // --------- Step 1: Query by Winery only ---------
+    let normalizedWinery = wineAttributes.winery.replace(/\s+/g, '').toLowerCase();
+
     let matchingWines = await Bottle.find({
-
-
-      Winery: { $regex: searchRegex, $options: "i" }
-
+      $expr: {
+        $regexMatch: {
+          input: { $replaceAll: { input: "$Winery", find: " ", replacement: "" } },
+          regex: normalizedWinery,
+          options: "i"
+        }
+      }
     });
-    console.log("mat", matchingWines ? matchingWines[0] : "no wines");
-    // Step 2: If more than one bottle is filtered using name or Winery,
-    // then further refine by filtering based on grapeType.
-    if (matchingWines.length > 1) {
-      const grapeMatches = matchingWines.filter((wine) =>
-        regexKeywords.some((regex) => wine.grapeType && regex.test(wine.grapeType))
-      );
-      // If any bottles match the grapeType criteria, use them as the final set.
+    console.log("After Winery query, found:", matchingWines.length, "wine(s)");
+
+    if (matchingWines.length > 1 && wineAttributes.name) {
+      const normalizedInputName = wineAttributes.name.replace(/\s+/g, "").toLowerCase();
+
+      const nameMatches = matchingWines.filter((wine) => {
+        if (!wine.name) return false;
+
+        const normalizedWineName = wine.name.replace(/\s+/g, "").toLowerCase();
+        return normalizedWineName.includes(normalizedInputName);
+      });
+
+      if (nameMatches.length > 0) {
+        matchingWines = nameMatches;
+      }
+    }
+    console.log("After Name filtering, found:", matchingWines.length, "wine(s)");
+
+    // --------- Step 3: If still multiple, refine by grapeType ---------
+    if (matchingWines.length > 1 && wineAttributes.grapeType) {
+      const normalizedInputGrape = wineAttributes.grapeType.replace(/\s+/g, "").toLowerCase();
+
+      const grapeMatches = matchingWines.filter((wine) => {
+        if (!wine.grapeType) return false;
+
+        const normalizedWineGrape = wine.grapeType.replace(/\s+/g, "").toLowerCase();
+        return normalizedWineGrape.includes(normalizedInputGrape);
+      });
+
       if (grapeMatches.length > 0) {
         matchingWines = grapeMatches;
       }
     }
+    console.log("After grapeType filtering, found:", matchingWines.length, "wine(s)");
 
-    // After these steps, matchingWines should contain the final candidate(s) based on Winery first,
-    // and if needed, refined by grapeType matching.
-    // Return the best match (first element)
     if (!matchingWines.length) {
-      return res.status(200).json({ message: "No matching wine found", keywords });
+      return res.status(200).json({ message: "No matching wine found", wineAttributes });
     }
 
-    //console.log("🟢 Final Sorted Matches:", matchingWines);
-    res.json(matchingWines[0]); // Return the final best match
-
+    // Return the first (or best) match
+    res.json(matchingWines[0]);
   } catch (error) {
     console.error("Error processing image:", error);
     res.status(500).json({ message: "Error processing image" });
   }
 });
+
+// app.post("/process-image", async (req, res) => {
+//   try {
+//     console.log("proces started");
+//     const { imageUrl } = req.body;
+//     console.log(imageUrl);
+//     if (!imageUrl)
+//       return res.status(400).json({ message: "❌ Image URL is required" });
+
+//     // Perform OCR using Google Cloud Vision
+//     const [result] = await client.textDetection(imageUrl);
+//     const detections = result.textAnnotations;
+//     const text = detections.length ? detections[0].description : "";
+
+//     console.log("✅ Extracted Text:", text);
+//     const keywords = text
+//       .toLowerCase()
+//       .replace(/[^a-z0-9\s]/g, "")
+//       .split(/\s+/)
+//       .filter((word) => word.length > 3);
+//     console.log("🔎 Keywords extracted:", keywords);
+
+
+//     // // Step 1: Search by name (Highest Priority)
+//     // let matchingWines = await Bottle.find({
+//     //   name: { $regex: regexKeywords.join("|"), $options: "i" },
+//     // }).limit(10);
+
+//     // // Step 2: If no direct name match, search in Winery
+//     // if (matchingWines.length === 0) {
+//     //   matchingWines = await Bottle.find({
+//     //     Winery: { $regex: regexKeywords.join("|"), $options: "i" },
+//     //   }).limit(10);
+//     // }
+
+//     // // Step 3: If no match in name or winery, expand to other fields
+//     // if (matchingWines.length === 0) {
+//     //   matchingWines = await Bottle.find({
+//     //     $or: [
+//     //       { region: { $regex: regexKeywords.join("|"), $options: "i" } },
+//     //       { grapeType: { $regex: regexKeywords.join("|"), $options: "i" } },
+//     //       { country: { $regex: regexKeywords.join("|"), $options: "i" } },
+//     //       {
+//     //         fullDescription: { $regex: regexKeywords.join("|"), $options: "i" },
+//     //       },
+//     //     ],
+//     //   }).limit(10);
+//     // }
+
+//     // // Step 4: Score Matches Dynamically Based on Keyword Presence
+//     // matchingWines = matchingWines.map((wine) => {
+//     //   let score = 0;
+//     //   const wineData = [
+//     //     { field: "name", value: wine.name, weight: 10 },
+//     //     { field: "Winery", value: wine.Winery, weight: 7 },
+//     //     { field: "region", value: wine.region, weight: 5 },
+//     //     { field: "grapeType", value: wine.grapeType, weight: 4 },
+//     //     { field: "country", value: wine.country, weight: 3 },
+//     //     { field: "fullDescription", value: wine.fullDescription, weight: 2 },
+//     //   ];
+
+//     //   wineData.forEach(({ value, weight }) => {
+//     //     if (value) {
+//     //       const matchCount = keywords.filter((k) =>
+//     //         value.toLowerCase().includes(k)
+//     //       ).length;
+//     //       score += matchCount * weight;
+//     //     }
+//     //   });
+
+//     //   return { ...wine._doc, score };
+//     // });
+
+//     // // Step 5: Sort by Score & Highest Rating
+//     // matchingWines.sort(
+//     //   (a, b) => b.score - a.score || b.avgRating - a.avgRating
+//     // );
+
+//     // console.log("🟢 Final Sorted Matches:", matchingWines);
+//     // if (!matchingWines.length) {
+//     //   return res
+//     //     .status(200)
+//     //     .json({ message: "No matching wine found", keywords });
+//     // }
+
+//     // res.json(matchingWines[0]); // Return the best match/ Return the best match
+
+//     // ===== UPDATED MATCHING WINES LOGIC =====
+
+//     // Step 1: Search by Winery using all keywords
+//     // Remove duplicate keywords to build a more effective regex
+//     // Remove duplicate keywords, just for good measure
+//     const uniqueKeywords = [...new Set(keywords)];
+//     const regexKeywords = uniqueKeywords.map((word) => new RegExp(word, "i"));
+
+//     // Create fuzzy regex patterns that allow for optional whitespace between letters.
+//     // For example, "eguigal" becomes "e\s*g\s*u\s*i\s*g\s*a\s*l".
+//     const fuzzyKeywords = uniqueKeywords.map(word =>
+//       word.split("").join("\\s*")
+//     );
+
+//     // Join the fuzzy keywords with a "|" to create a combined regex pattern.
+//     const fuzzyRegex = fuzzyKeywords.join("|");
+
+//     // Step 1: Search by Winery only using the fuzzy regex to allow for mismatched spacing
+//     let matchingWines = await Bottle.find({
+//       Winery: { $regex: fuzzyRegex, $options: "i" }
+//     });
+
+//     //  console.log("Step 1 (Winery) matches:", matchingWines); 
+
+//     // Step 2: If more than one match, refine by Name
+//     // Step 3: If there's still more than one match, refine by grapeType
+//     if (matchingWines.length > 1) {
+//       const nameMatches = matchingWines.filter((wine) =>
+//         wine.name && new RegExp(fuzzyRegex, "i").test(wine.name)
+//       );
+//       if (nameMatches.length > 0) {
+//         matchingWines = nameMatches;
+//       }
+//     }
+
+//     console.log("Step 2 (Name) refined matches:", matchingWines.length);
+
+//     // Step 3: If there's still more than one match, refine by grapeType
+//     if (matchingWines.length > 1) {
+//       const grapeMatches = matchingWines.filter((wine) =>
+//         regexKeywords.some((regex) => wine.grapeType && regex.test(wine.grapeType))
+//       );
+//       if (grapeMatches.length > 0) {
+//         matchingWines = grapeMatches;
+//       }
+//     }
+
+//     console.log("Step 3 (grapeType) refined matches:", matchingWines.length);
+
+//     if (!matchingWines.length) {
+//       return res.status(200).json({ message: "No matching wine found", keywords });
+//     }
+
+//     res.json(matchingWines[0]); // Return the best match
+
+//   } catch (error) {
+//     console.error("Error processing image:", error);
+//     res.status(500).json({ message: "Error processing image" });
+//   }
+// });
 
 //API'ss for DataBase
 const userRoutes = require("./Routes/UserRoutes");
