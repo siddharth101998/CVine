@@ -14,7 +14,9 @@ const BottleSchema = new mongoose.Schema({
     country: { type: String, required: true },
     alcoholContent: { type: String },
     boldness: { type: Object },
-    viewcount: { type: Number, default: 0 }
+    viewcount: { type: Number, default: 0 },
+    vintage: { type: String },
+    productlink: { type: String }
 });
 
 // Index for faster queries on the 'name' field (if needed for sorting or queries)

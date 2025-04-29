@@ -1,7 +1,7 @@
 const Bottle = require("../models/Bottles"); // Import Bottle model
 const { search } = require("../Routes/bottleRoutes");
 const Fuse = require("fuse.js");
-
+const BottleView = require("../models/BottleViews");
 // @desc    Get all bottles
 // @route   GET /api/bottles
 // @access  Public
@@ -70,8 +70,7 @@ const searchbottle = async (req, res) => {
         if (wineType) filter.wineType = wineType;
         if (grapeType) filter.grapeType = grapeType;
 
-        // Fetch relevant bottles from DB with filters (limit to 50 for performance)
-        const bottles = await Bottle.find(filter, "name winery country winetype grapetype").limit(50);
+        const bottles = await Bottle.find(filter, "name Winery country wineType grapeType imageUrl").limit(500);
 
         // Use Fuse.js for fuzzy search
         const fuse = new Fuse(bottles, {
@@ -89,4 +88,27 @@ const searchbottle = async (req, res) => {
     }
 };
 
-module.exports = { getBottleById, deleteBottle, addBottle, getAllBottles, searchbottle }
+const getTrending = async (req, res) => {
+    try {
+        console.log("absfd");
+        // First, get top 10 bottleIds based on view counts
+        const topBottles = await BottleView.find({})
+            .sort({ viewCount: -1 })
+            .limit(50)
+            .select('bottleId viewCount')
+            .lean();
+
+        const bottleIds = topBottles.map(bv => bv.bottleId);
+        console.log("bot", topBottles);
+        // Now, fetch corresponding bottle details
+        const bottles = await Bottle.find({ _id: { $in: bottleIds } }, 'name imageUrl');
+
+
+
+        res.status(200).json({ success: true, data: bottles });
+    } catch (error) {
+        console.error("Error fetching top bottles overall:", error);
+        res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    }
+};
+module.exports = { getBottleById, deleteBottle, addBottle, getAllBottles, searchbottle, getTrending }
