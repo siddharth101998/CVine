@@ -3,10 +3,10 @@ const SearchHistory = require('../models/SearchHistory');
 const addhistory = async (req, res) => {
     try {
         // Destructure the request body for userId and bottles
-        const { userId, bottles } = req.body;
-
+        const { userId, bottle } = req.body;
+        console.log("histroy body", req.body);
         // Create a new entry. The createdat field will automatically use the default.
-        const newEntry = new SearchHistory({ userId, bottles });
+        const newEntry = new SearchHistory({ userId, bottle });
 
         // Save the entry in the database
         await newEntry.save();
@@ -26,7 +26,7 @@ const gethistory = async (req, res) => {
 
         // Find entries matching the given userId. Optionally, populate related fields.
         const entries = await SearchHistory.find({ userId: id })
-            .populate('bottles')  // If you want to include bottle details
+            .populate('bottle')  // If you want to include bottle details
             .populate('userId');  // If you want to include user details
 
         res.status(200).json(entries);
