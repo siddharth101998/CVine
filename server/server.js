@@ -62,15 +62,25 @@ async function callOpenAI(prompt, retries = 3) {
 // Chat Route
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message } = req.body;
-    if (!message)
-      return res.status(400).json({ error: "Message is required." });
+    const { messages } = req.body;  // 👈 Now expecting array of full conversation
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: "Messages array is required." });
+    }
+
+    // Prepend system message for every conversation
+    const systemMessage = {
+      role: "system",
+      content:
+        "You are a wine and wine recipe expert. Keep your answers concise and under 50 words. If the question is not related to wines or their recipes, respond: 'I do not know about this. Can I help you with wine knowledge?'"
+    };
+    const openAIMessages = [systemMessage, ...messages];
 
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
         model: "gpt-4o",
-        messages: [{ role: "user", content: message }],
+        messages: openAIMessages,
+        // messages: messages
       },
       {
         headers: {
@@ -82,11 +92,7 @@ app.post("/api/chat", async (req, res) => {
       }
     );
 
-    if (
-      response.data &&
-      response.data.choices &&
-      response.data.choices.length > 0
-    ) {
+    if (response.data?.choices?.length > 0) {
       res.json({ reply: response.data.choices[0].message.content });
     } else {
       res.status(500).json({ error: "Unexpected API response format." });

@@ -9,13 +9,12 @@ const Bottle = require('./models/Bottles');
 // 1. Connect to MongoDB
 const MONGODB_URI = "mongodb+srv://khandelwalsidhrth:Cvinefullstack25@cvine.c0znu.mongodb.net/";
 
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-});
+mongoose.connect(MONGODB_URI)
+    .then(() => console.log('MongoDB connected.'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 // 2. Path to the new CSV file
-const csvFilePath = path.join(__dirname, '..', 'data', 'updatedBottles.csv');
+const csvFilePath = path.join(__dirname, '..', 'data', 'UpdateData.csv');
 
 // 3. Prepare an array to accumulate bulk update operations.
 let bulkOperations = [];
@@ -24,43 +23,41 @@ let bulkOperations = [];
 fs.createReadStream(csvFilePath)
     .pipe(csv())
     .on('data', (row) => {
-        // Use 'Firebase Image URL' from the CSV as the mapping key to find the document.
-        const filter = { imageUrl: row['Firebase Image URL'] };
+        try {
+            const imageUrl = row['Firebase Image URL']?.trim();
 
-        // Build the update operation. Adjust the fields below as necessary.
-        // Here, we update various fields in the document based on CSV data.
-        const update = {
-            $set: {
-                name: row['Wine Name'],
-                Winery: row['Winery'], // Adjust if your schema uses a different name (e.g., brandWinery).
-                foodPairings: row['Food Pairings'],
-                grapeType: row['primary type'],
+            if (!imageUrl) return;
+
+            const setData = {};
+
+            setData.fullDescription = row['new_wine_description'].trim();
+
+
+            if (Object.keys(setData).length > 0) {
+                bulkOperations.push({
+                    updateOne: {
+                        filter: { imageUrl },
+                        update: { $set: setData },
+                    },
+                });
             }
-        };
-
-        // Push the updateOne operation to the bulkOperations array.
-        bulkOperations.push({
-            updateOne: {
-                filter: filter,
-                update: update,
-            },
-        });
+        } catch (err) {
+            console.error('Error processing row:', row, err);
+        }
     })
     .on('end', async () => {
         console.log(`CSV file processing complete. Total records to update: ${bulkOperations.length}`);
         try {
             if (bulkOperations.length > 0) {
-                // 5. Execute all update operations as a bulkWrite.
                 const bulkWriteResult = await Bottle.bulkWrite(bulkOperations);
                 console.log("Bulk update completed successfully. Result:");
                 console.log(bulkWriteResult);
             } else {
-                console.log("No records found to update.");
+                console.log("No valid records found to update.");
             }
         } catch (err) {
             console.error("Error during bulk update:", err);
         } finally {
-            // 6. Close the MongoDB connection.
             mongoose.connection.close();
         }
     })
