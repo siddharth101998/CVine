@@ -23,6 +23,18 @@ const createRecipe = async (req, res) => {
     }
 };
 
+const getRecipeCount = async (req, res) => {
+    try {
+        const count = await Recipe.countDocuments({byUserId: req.params.id});
+        if (count === 0) {
+            return res.status(200).json({ message: 'No recipes found for this user' ,count});
+        }
+        res.status(200).json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching recipe count', error });
+    }
+}
+
 // Get all recipes
 const getAllRecipes = async (req, res) => {
     try {
@@ -59,6 +71,18 @@ const updateRecipe = async (req, res) => {
         res.status(500).json({ message: 'Error updating recipe', error });
     }
 };
+
+const getRecipeByUserId = async (req, res) => {
+    try {
+        const recipes = await Recipe.find({ byUserId: req.params.id });
+        if (recipes.length === 0) {
+            return res.status(404).json({ message: 'No recipes found for this user' });
+        }
+        res.status(200).json(recipes);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching recipes', error });
+    }
+}
 
 // Delete a recipe
 const deleteRecipe = async (req, res) => {
@@ -210,5 +234,5 @@ module.exports = {
     toggleLike,
     createComment,
     getCommentsByRecipeId,
-    deleteComment
+    deleteComment,getRecipeCount,getRecipeByUserId
 };

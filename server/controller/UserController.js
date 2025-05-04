@@ -66,7 +66,7 @@ const createUser = async (req, res) => {
   try {
     console.log("create started")
     const { email, password, firstName } = req.body;
-
+    console.log(req.body);
     if (!email || !password || !firstName) {
       return res
         .status(400)
@@ -81,15 +81,16 @@ const createUser = async (req, res) => {
     }
 
     //const hashedPassword = await bcrypt.hash(password, 10);
-
+    console.log(firstName)
     const newUser = new User({
       email,
       password: password,
+      username:firstName,
       userType: "Normal",
     });
 
     await newUser.save();
-    console.log("usercreated");
+    console.log(newUser, "new user");
     res.status(201).json({
       success: true,
       message: "User created successfully.",
