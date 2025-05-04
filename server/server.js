@@ -1,10 +1,11 @@
 require("dotenv").config();
 const vision = require("@google-cloud/vision");
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS =
-  "./config/dotted-tide-453000-f3-2c7e9aae9a03.json";
+const { GoogleApplicationKey } = require("./config/applicationkey");
 
-const client = new vision.ImageAnnotatorClient();
+const client = new vision.ImageAnnotatorClient({
+  credentials: GoogleApplicationKey
+});
 const axios = require("axios");
 axios.defaults.decompress = false;
 const cors = require("cors");
@@ -78,7 +79,7 @@ app.post("/api/chat", async (req, res) => {
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: openAIMessages,
         // messages: messages
       },
