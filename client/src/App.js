@@ -29,13 +29,14 @@ function App() {
                     {/* Routes without Navbar */}
                     <Route path="/" element={<AuthForm />} />
                     <Route path="/login_register" element={<AuthForm />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
 
                     {/* Routes with Navbar via MainLayout */}
                     <Route element={<MainLayout />}>
                         <Route path="/chat" element={<ChatComponent />} />
                         <Route path="/bottle/:id" element={<Bottle />} />
                         <Route path="/homepage" element={<Homepage />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
+
                         <Route path="/recipe" element={<Recipe />} />
                         <Route path="/profile" element={<UserProfile />} />
                         <Route path="/recommend" element={<WineRecommendation />} />

@@ -41,7 +41,7 @@ const Navbar = () => {
 
     const rightNavItems = [
         { label: "Pairing Guide", url: "/pairing-guide" },
-        { label: "About Us", url: "/about-us" },
+        { label: "Dashboard", url: "/dashboard" },
         { label: "Login/Register", url: "/login-register" },
         { label: "Profile", url: "/profile" }
     ];
