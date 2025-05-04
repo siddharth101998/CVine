@@ -1,13 +1,13 @@
 exports.GoogleApplicationKey = {
-    "type": "service_account",
-    "project_id": "dotted-tide-453000-f3",
-    "private_key_id": "2c7e9aae9a03dc8ac6d614cb0b82890b5aa154c6",
-    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC/mz2TztsodJoy\n9ImYIESK2ATSw5krTkxDt0EO55nwAriqSkuWe0oK4JanW288ZXIJIsKHKKw3BDkB\nJxkCqYYUqunlpKo359N/vZwo7+2Rw/Zk3M7mrfM15JGwH8/DRi8lN+Wh8g2IzEI7\nYrd2cC+1LP95GcXNsjxMn3+vuKn3cdVsjj7gJcZnHItABIvWnKgs5CtOows495LB\n/zfLwNSlGmBPQ2idyO6CIACUL1lvfeha8/0m3+Tm53DnBH08EI2l9A561tSd9y9x\nZu7hT90PM4vhstzYa36uv1rKZWxQJdXNmdaEkyVR/pcDWyxmrLp15CILqhUlqd3H\nRD9axtHBAgMBAAECggEABxb+c06vK1MNNZ94y+k9wAl4PDhCnaibB9JrFNsbBheD\nr8FqBJpxRe/Dg1PNzOVQD+h6XDf0D2EXnuRMd53AOVmNqBKsvb7VQ5/HfHhMSR2A\nK4FEIqMDIdZgUa0LqgUZz32/AHwNZidwt/PSKA7EpSaSGXALsq3Kr2cjeWQS3fYG\n9EKCAkoNooNOYAA6zlSeA98Qqy6kqX0I7vcgcfA4mdeYciZpkWpBQglpm6XwYNEX\nE8DwBGg7nmRavHszVXql2lVK36rUsQDcVu45DX41x4aXx5TVIH9njMNIte5Hk9jc\nwhcahkTolOgNofgaHu44hnyy4kPeHMMmGxqT+Y53MQKBgQDg4peiJ8L+lAvgTAIa\n0PiGYQjpmnBQZ4Yhadn5bLq2itYRs5Xele44REwAcWzLCmbtcFw811Y97uZblXxZ\nmnDqBlF4HzHk4OsDbH310RvNAi+m5kk3llOBE6kPMBJ+s74mYdwp7QdcL4eiGfs9\n2zZ4YbT3Ks89IMH9oOY0k3YR3QKBgQDaHetkyoltFSgCipb+okIGFg/FovUzXJzJ\nSBfLFcuunf5kK6+uJx7xVAgwKZBou7X5qoMVkovdzDJemW36Y3JQ3G0mCfdztvjR\nJeSle/Wk0pjsP3BTucAnZIbHnxNSuxQeKmjWx4iHYsskahbDrl5aEsnItG/4XJq4\nUw45otkrNQKBgH+UjWnVHO7IlqQ8+sSz4Qp7ak786tLyqEm0f5Ddel+tDB0mwNNy\nQ59wP53Qu2PFFveFUw7BK5AfRFiYyd8bmwtpYja/m9K5NxrOJfebFiaMIvSQmOEM\nS3ti5/pRz2xKFIo54ml2q0JFRLFWBA7nmlNZOw0uIDwRpXx6F5+kOMuRAoGAcOaZ\nyNM5rVgNHLumCunsKQBUa6W9LDfdBCcoAbwncRxg6HLgfdHMJ3iqwFtTX5MCT9hd\n/9WaRlWDIQpkLf451vcyHEV+a8wjIQdvQeVXMli8RVVVDFGS0BEt3rhNpT4m3LJx\nD/O6jPGrWw7695ETT6Z4Aka7yqAMiiqbq2PK650CgYBL0D5dOITEClLvlnqBH1wg\nUtKb9eOzAfrEBueEnQ+kv6Ind4BqowE6AtCq0I1g6GY5ADFK0M4bedCgQy1W4B4/\nXdwnBi57WX2EOgtqeLr4bjJHS2aSfJQJ9JrCt5hUvDFBCbLzUFwn8gM/fOfyzzLF\nbprS47bsxsboDMJk49cl0w==\n-----END PRIVATE KEY-----\n",
-    "client_email": "cvine-869@dotted-tide-453000-f3.iam.gserviceaccount.com",
-    "client_id": "116887442336668956824",
-    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-    "token_uri": "https://oauth2.googleapis.com/token",
-    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cvine-869%40dotted-tide-453000-f3.iam.gserviceaccount.com",
-    "universe_domain": "googleapis.com"
-}
+    type: process.env.GCP_TYPE,
+    project_id: process.env.GCP_PROJECT_ID,
+    private_key_id: process.env.GCP_PRIVATE_KEY_ID,
+    private_key: process.env.GCP_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: process.env.GCP_CLIENT_EMAIL,
+    client_id: process.env.GCP_CLIENT_ID,
+    auth_uri: process.env.GCP_AUTH_URI,
+    token_uri: process.env.GCP_TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.GCP_AUTH_PROVIDER_CERT_URL,
+    client_x509_cert_url: process.env.GCP_CLIENT_CERT_URL,
+    universe_domain: process.env.GCP_UNIVERSE_DOMAIN
+};
