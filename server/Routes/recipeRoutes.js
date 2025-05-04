@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const recipeController = require('../controller/recipeController');
+const recipeController = require('../controller/RecipeController');
 
 // Static routes first
 router.get('/', recipeController.getAllRecipes);        // Get all recipes

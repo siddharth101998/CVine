@@ -404,7 +404,7 @@ Strict output rules:
     }
 
     // Return the first (or best) match
-    res.json(matchingWines[0]);
+    res.json(matchingWines);
   } catch (error) {
     console.error("Error processing image:", error);
     res.status(500).json({ message: "Error processing image" });
