@@ -111,4 +111,33 @@ const getTrending = async (req, res) => {
         res.status(500).json({ success: false, message: "Server Error", error: error.message });
     }
 };
-module.exports = { getBottleById, deleteBottle, addBottle, getAllBottles, searchbottle, getTrending }
+const getTopViewedBottles = async (req, res) => {
+    try {
+        const topBottles = await BottleView.find({})
+            .sort({ viewCount: -1 })
+            .limit(20)
+            .select("bottleId viewCount");
+
+        const bottleIds = topBottles.map(entry => entry.bottleId);
+        const bottles = await Bottle.find({ _id: { $in: bottleIds } });
+
+        // Create a map of view counts for reference
+        const viewCountMap = topBottles.reduce((acc, curr) => {
+            acc[curr.bottleId] = curr.viewCount;
+            return acc;
+        }, {});
+
+        // Attach view count to bottle details
+        const bottleDetailsWithViews = bottles.map(bottle => ({
+            ...bottle.toObject(),
+            viewCount: viewCountMap[bottle._id] || 0
+        }));
+
+        res.status(200).json({ success: true, data: bottleDetailsWithViews });
+    } catch (error) {
+        console.error("Error fetching top 20 viewed bottles:", error);
+        res.status(500).json({ success: false, message: "Server Error", error: error.message });
+    }
+};
+
+module.exports = { getBottleById, deleteBottle, addBottle, getAllBottles, searchbottle, getTrending, getTopViewedBottles };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Typography, Grid, Box, Stack } from '@mui/material';
 import { Pie } from 'react-chartjs-2';
 import axios from 'axios';
+import BottleTable from './BottleTable';
 import {
     Chart as ChartJS,
     ArcElement,
@@ -52,40 +53,43 @@ const AnalyticsCharts = () => {
             </Typography>
 
             {viewData ? (
-                <Grid container spacing={2} >
-                    {/* Labels Column */}
-                    <Grid item xs={12} md={6}>
-                        <Stack spacing={1}>
-                            {viewData.labels.map((label, index) => (
-                                <Box key={index} display="flex" alignItems="center">
-                                    <Box
-                                        sx={{
-                                            width: 32,
-                                            height: 32,
-                                            backgroundColor: COLORS[index % COLORS.length],
-                                            borderRadius: '50%',
-                                            mr: 1.5,
-                                        }}
-                                    />
-                                    <Typography variant="body2" sx={{ fontSize: 25 }} >{label}</Typography>
-                                </Box>
-                            ))}
-                        </Stack>
-                    </Grid>
+                <>
+                    <Grid container spacing={2} >
+                        {/* Labels Column */}
+                        <Grid item xs={12} md={6}>
+                            <Stack spacing={1}>
+                                {viewData.labels.map((label, index) => (
+                                    <Box key={index} display="flex" alignItems="center">
+                                        <Box
+                                            sx={{
+                                                width: 32,
+                                                height: 32,
+                                                backgroundColor: COLORS[index % COLORS.length],
+                                                borderRadius: '50%',
+                                                mr: 1.5,
+                                            }}
+                                        />
+                                        <Typography variant="body2" sx={{ fontSize: 25 }} >{label}</Typography>
+                                    </Box>
+                                ))}
+                            </Stack>
+                        </Grid>
 
-                    {/* Chart Column */}
-                    <Grid item xs={12} md={6} sx={{ mb: 10 }}>
-                        <Pie
-                            data={viewData}
-                            options={{
-                                plugins: {
-                                    legend: { display: false }, // remove legend near pie
-                                    tooltip: { enabled: true }, // keep hover tooltip
-                                }
-                            }}
-                        />
+                        {/* Chart Column */}
+                        <Grid item xs={12} md={6} sx={{ mb: 10 }}>
+                            <Pie
+                                data={viewData}
+                                options={{
+                                    plugins: {
+                                        legend: { display: false }, // remove legend near pie
+                                        tooltip: { enabled: true }, // keep hover tooltip
+                                    }
+                                }}
+                            />
+                        </Grid>
                     </Grid>
-                </Grid>
+                    <BottleTable />
+                </>
             ) : (
                 <Typography>Loading view data...</Typography>
             )}
