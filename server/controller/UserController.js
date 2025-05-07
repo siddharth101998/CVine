@@ -65,8 +65,14 @@ const incrementLoginCount = async (userId) => {
 const createUser = async (req, res) => {
   try {
     console.log("create started")
+<<<<<<< HEAD
     const { email, password, username, fullName } = req.body;
     if (!email || !password || !username || !fullName) {
+=======
+    const { email, password, firstName } = req.body;
+    console.log(req.body);
+    if (!email || !password || !firstName) {
+>>>>>>> dev-sid
       return res
         .status(400)
         .json({ success: false, message: "All fields are required." });
@@ -80,6 +86,7 @@ const createUser = async (req, res) => {
     }
 
     //const hashedPassword = await bcrypt.hash(password, 10);
+<<<<<<< HEAD
 
       const newUser = new User({
           email,
@@ -88,9 +95,18 @@ const createUser = async (req, res) => {
           fullName,
           userType: "Normal",
         });
+=======
+    console.log(firstName)
+    const newUser = new User({
+      email,
+      password: password,
+      username:firstName,
+      userType: "Normal",
+    });
+>>>>>>> dev-sid
 
     await newUser.save();
-    console.log("usercreated");
+    console.log(newUser, "new user");
     res.status(201).json({
       success: true,
       message: "User created successfully.",

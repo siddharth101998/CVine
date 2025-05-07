@@ -1,16 +1,23 @@
 require("dotenv").config();
 const vision = require("@google-cloud/vision");
+const fs = require("fs");
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS =
-  "./config/dotted-tide-453000-f3-2c7e9aae9a03.json";
+let credentials;
 
-const client = new vision.ImageAnnotatorClient();
+if (process.env.GOOGLE_VISION_KEY_BASE64) {
+  const decoded = Buffer.from(process.env.GOOGLE_VISION_KEY_BASE64, "base64").toString("utf-8");
+  credentials = JSON.parse(decoded);
+}
+
+const client = new vision.ImageAnnotatorClient({
+  credentials: credentials
+});
 const axios = require("axios");
 axios.defaults.decompress = false;
 const cors = require("cors");
 const express = require("express");
 const connectDB = require("./config/db");
-const fs = require("fs");
+
 const csv = require("csv-parser");
 const Bottle = require("./models/Bottles");
 const Tesseract = require("tesseract.js");
@@ -78,7 +85,7 @@ app.post("/api/chat", async (req, res) => {
     const response = await axios.post(
       "https://api.openai.com/v1/chat/completions",
       {
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: openAIMessages,
         // messages: messages
       },
@@ -397,12 +404,22 @@ Strict output rules:
     }
 
     // Return the first (or best) match
-    res.json(matchingWines[0]);
+    res.json(matchingWines);
   } catch (error) {
     console.error("Error processing image:", error);
     res.status(500).json({ message: "Error processing image" });
   }
 });
+async function test() {
+  try {
+    const [result] = await client.textDetection({
+      image: { source: { imageUri: "https://upload.wikimedia.org/wikipedia/commons/4/41/Wine_label_sample.jpg" } }
+    });
+    console.log("✅ Text:", result.textAnnotations?.[0]?.description || "No text found");
+  } catch (err) {
+    console.error("❌ Failed:", err.message);
+  }
+}
 
 // app.post("/process-image", async (req, res) => {
 //   try {
@@ -584,3 +601,4 @@ app.use("/searchHistory", searchHistoryRoutes);
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+test();

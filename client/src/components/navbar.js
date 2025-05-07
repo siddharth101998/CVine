@@ -35,7 +35,13 @@ const Navbar = () => {
     // Define right navigation items that are always present
     const rightNavItems = [
         { label: "Pairing Guide", url: "/pairing-guide" },
+<<<<<<< HEAD
         { label: "About Us", url: "/about-us" }
+=======
+        { label: "Dashboard", url: "/dashboard" },
+        { label: "Login/Register", url: "/login-register" },
+        { label: "Profile", url: "/profile" }
+>>>>>>> dev-sid
     ];
 
     // Conditionally add the login or profile button based on the user status
