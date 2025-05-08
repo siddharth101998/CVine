@@ -1,7 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Outlet } from "react-router-dom";
 import Navbar from "./components/navbar";
-import Home from "./pages/home";  // Example page
 import AuthForm from "./components/authform";
 import ChatComponent from "./components/chat/ChatComponent";
 import Bottle from "./components/bottle/bottle";
@@ -27,12 +26,12 @@ function App() {
             <Router>
                 <Routes>
                     {/* Routes without Navbar */}
-                    <Route path="/" element={<AuthForm />} />
                     <Route path="/login_register" element={<AuthForm />} />
                     <Route path="/dashboard" element={<Dashboard />} />
 
                     {/* Routes with Navbar via MainLayout */}
                     <Route element={<MainLayout />}>
+                        <Route path="/" element={<Homepage />} />  {/* Landing page */}
                         <Route path="/chat" element={<ChatComponent />} />
                         <Route path="/bottle/:id" element={<Bottle />} />
                         <Route path="/homepage" element={<Homepage />} />

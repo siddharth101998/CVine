@@ -5,10 +5,11 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import Logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
+    const { user } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
-    const [darkMode, setDarkMode] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
 
@@ -16,35 +17,39 @@ const Navbar = () => {
         setMobileOpen(!mobileOpen);
     };
 
-    const toggleDarkMode = () => {
-        setDarkMode(!darkMode);
-    };
-
     useEffect(() => {
         const handleScroll = () => {
-            if (window.scrollY > 50) {
-                setIsScrolled(true);
-            } else {
-                setIsScrolled(false);
-            }
+            setIsScrolled(window.scrollY > 50);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Define left and right navigation items separately
+    // Define left navigation items (static)
     const leftNavItems = [
         { label: "Home", url: "/homepage" },
         { label: "Scan Wine", url: "/chat" },
         { label: "Get Recommendation", url: "/recommend" }
     ];
 
+    // Define right navigation items that are always present
     const rightNavItems = [
         { label: "Pairing Guide", url: "/pairing-guide" },
+<<<<<<< HEAD
+        { label: "About Us", url: "/about-us" }
+=======
         { label: "Dashboard", url: "/dashboard" },
         { label: "Login/Register", url: "/login-register" },
         { label: "Profile", url: "/profile" }
+>>>>>>> dev-sid
     ];
+
+    // Conditionally add the login or profile button based on the user status
+    if (user) {
+        rightNavItems.push({ label: "Profile", url: "/profile" });
+    } else {
+        rightNavItems.push({ label: "Login/Register", url: "/login_register" });
+    }
 
     // For mobile view, show all nav items in order (left + right)
     const mobileNavItems = [...leftNavItems, ...rightNavItems];

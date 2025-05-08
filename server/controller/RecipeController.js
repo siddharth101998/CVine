@@ -4,7 +4,7 @@ const RecipeComment = require('../models/Recipecomment');
 const createRecipe = async (req, res) => {
     try {
         console.log("recipe created started", req.body);
-        const { name, ingredients, bottles, method, userName, expertRecommendation, byUserId } = req.body;
+        const { name, ingredients, bottles, method, userName, byUserId,imageUrl } = req.body;
 
         const newRecipe = new Recipe({
             name,
@@ -12,13 +12,15 @@ const createRecipe = async (req, res) => {
             bottles,
             method,
             userName,
-            expertRecommendation,
+            imageUrl,
             byUserId,
         });
 
         const savedRecipe = await newRecipe.save();
+        console.log("recipe created", savedRecipe);
         res.status(201).json(savedRecipe);
     } catch (error) {
+        console.log("Error creating recipe:", error);
         res.status(500).json({ message: 'Error creating recipe', error });
     }
 };
@@ -165,6 +167,31 @@ const toggleDislike = async (req, res) => {
     }
 };
 
+// Toggling save/bookmark
+const toggleSave = async (req, res) => {
+  console.log('toggleSave called with:', req.body);
+  try {
+    const { recipeId, userId } = req.body;
+    const recipe = await Recipe.findById(recipeId);
+    console.log('Recipe before toggleSave:', recipe);
+    if (!recipe) {
+      return res.status(404).json({ message: 'Recipe not found' });
+    }
+    const alreadySaved = recipe.savedusers.includes(userId);
+    if (alreadySaved) {
+      recipe.savedusers.pull(userId);
+    } else {
+      recipe.savedusers.push(userId);
+    }
+    const updatedRecipe = await recipe.save();
+    console.log('Recipe after toggleSave:', updatedRecipe);
+    res.status(200).json(updatedRecipe);
+  } catch (error) {
+    console.error('Error toggling save:', error);
+    res.status(500).json({ message: 'Error toggling save', error });
+  }
+};
+
 // Add a comment to a recipe
 // const addComment = async (req, res) => {
 //     try {
@@ -187,11 +214,13 @@ const createComment = async (req, res) => {
         console.log("comment started", req.body)
         // Destructure th
         // e required fields from the request body
-        const { recipeId, userId, comment } = req.body;
-        const newComment = new RecipeComment({ recipeId, userId, comment });
+        const { recipeId, userId, userName, comment } = req.body;
+        const newComment = new RecipeComment({ recipeId, userId, userName, comment });
         const savedComment = await newComment.save();
+        
         res.status(201).json(savedComment);
     } catch (error) {
+        console.log("Error creating comment:", error);
         res.status(500).json({ message: 'Error creating comment', error });
     }
 };
@@ -199,10 +228,22 @@ const createComment = async (req, res) => {
 // Get all comments for a specific recipe by recipeId
 const getCommentsByRecipeId = async (req, res) => {
     try {
-        const { recipeId } = req.params;
-        const comments = await RecipeComment.find({ recipeId });
-        res.status(200).json(comments);
+        const recipeId  = req.params.id;
+        console.log("recipeId", recipeId);
+        const comments = await RecipeComment
+          .find({ recipeId })
+          .populate({ path: 'userId', select: 'userName username name' });
+        const formatted = comments.map(c => ({
+          _id: c._id,
+          recipeId: c.recipeId,
+          comment: c.comment,
+          userId: c.userId._id,
+          commenterName: c.userId.userName || c.userId.username || c.userId.name || 'Anonymous',
+          createdAt: c.createdAt
+        }));
+        res.status(200).json(formatted);
     } catch (error) {
+        console.log("Error fetching comments:", error);
         res.status(500).json({ message: 'Error fetching comments', error });
     }
 };
@@ -232,6 +273,7 @@ module.exports = {
     deleteRecipe,
     toggleDislike,
     toggleLike,
+    toggleSave,
     createComment,
     getCommentsByRecipeId,
     deleteComment,getRecipeCount,getRecipeByUserId
