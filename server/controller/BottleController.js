@@ -60,16 +60,16 @@ const searchbottle = async (req, res) => {
     try {
         const query = req.query.q; // Search term
         const { country, wineType, grapeType } = req.query; // Extract filters from query params
-
+        console.log("req", req.query);
         if (!query) return res.json({ success: true, data: [] });
 
         // Create a filter object for MongoDB query
         let filter = {};
 
-        if (country) filter.country = country;
-        if (wineType) filter.wineType = wineType;
-        if (grapeType) filter.grapeType = grapeType;
-
+        if (country) filter.country = { $in: country };
+        if (wineType) filter.wineType = { $in: wineType };
+        if (grapeType) filter.grapeType = { $in: grapeType };
+        console.log("filter", filter);
         const bottles = await Bottle.find(filter, "name Winery country wineType grapeType imageUrl").limit(500);
 
         // Use Fuse.js for fuzzy search
