@@ -61,8 +61,8 @@ const searchbottle = async (req, res) => {
         const query = req.query.q; // Search term
         const { country, wineType, grapeType } = req.query; // Extract filters from query params
 
-        if (!query) return res.json({ success: true, data: [] });
-
+        // if (!query) return res.json({ success: true, data: [] });
+        console.log("search started", req.query)
         // Create a filter object for MongoDB query
         let filter = {};
 
@@ -71,17 +71,20 @@ const searchbottle = async (req, res) => {
         if (grapeType) filter.grapeType = grapeType;
 
         const bottles = await Bottle.find(filter, "name Winery country wineType grapeType imageUrl").limit(500);
+        if (query) {
+            // Use Fuse.js for fuzzy search
+            const fuse = new Fuse(bottles, {
+                keys: ["name"],
+                threshold: 0.3,
+            });
 
-        // Use Fuse.js for fuzzy search
-        const fuse = new Fuse(bottles, {
-            keys: ["name"],
-            threshold: 0.3,
-        });
+            // Get top 10 matches
+            const results = fuse.search(query).slice(0, 10).map(r => r.item);
+            res.json({ success: true, data: results });
+            return;
+        }
 
-        // Get top 10 matches
-        const results = fuse.search(query).slice(0, 10).map(r => r.item);
-
-        res.json({ success: true, data: results });
+        res.json({ success: true, data: bottles });
     } catch (error) {
         console.error("Search Error:", error);
         res.status(500).json({ success: false, message: "Server Error" });
