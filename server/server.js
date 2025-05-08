@@ -410,16 +410,16 @@ Strict output rules:
     res.status(500).json({ message: "Error processing image" });
   }
 });
-async function test() {
-  try {
-    const [result] = await client.textDetection({
-      image: { source: { imageUri: "https://upload.wikimedia.org/wikipedia/commons/4/41/Wine_label_sample.jpg" } }
-    });
-    console.log("✅ Text:", result.textAnnotations?.[0]?.description || "No text found");
-  } catch (err) {
-    console.error("❌ Failed:", err.message);
-  }
-}
+// async function test() {
+//   try {
+//     const [result] = await client.textDetection({
+//       image: { source: { imageUri: "https://upload.wikimedia.org/wikipedia/commons/4/41/Wine_label_sample.jpg" } }
+//     });
+//     console.log("✅ Text:", result.textAnnotations?.[0]?.description || "No text found");
+//   } catch (err) {
+//     console.error("❌ Failed:", err.message);
+//   }
+// }
 
 // app.post("/process-image", async (req, res) => {
 //   try {
@@ -601,4 +601,4 @@ app.use("/searchHistory", searchHistoryRoutes);
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
-test();
+// test();

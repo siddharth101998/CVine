@@ -1,4 +1,4 @@
-//const bcrypt = require('bcrypt');
+const bcrypt = require('bcrypt');
 const User = require("../models/User");
 const Badges = require("../models/Badges");
 
@@ -65,28 +65,21 @@ const incrementLoginCount = async (userId) => {
 const createUser = async (req, res) => {
   try {
     console.log("create started")
-<<<<<<< HEAD
     const { email, password, username, fullName } = req.body;
-    if (!email || !password || !username || !fullName) {
-=======
-    const { email, password, firstName } = req.body;
-    console.log(req.body);
-    if (!email || !password || !firstName) {
->>>>>>> dev-sid
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required." });
-    }
+    console.log(req.body)
+    // if (!email || !password || !username || !fullName) {
+    //   return res
+    //     .status(400)
+    //     .json({ success: false, message: "All fields are required." });
+    // }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already exists." });
+      console.log("user exists")
+      return res.status(400).json({ success: false, message: "Email already exists." });
     }
 
-    //const hashedPassword = await bcrypt.hash(password, 10);
-<<<<<<< HEAD
+    const hashedPassword = await bcrypt.hash(password, 10);
 
       const newUser = new User({
           email,
@@ -95,15 +88,6 @@ const createUser = async (req, res) => {
           fullName,
           userType: "Normal",
         });
-=======
-    console.log(firstName)
-    const newUser = new User({
-      email,
-      password: password,
-      username:firstName,
-      userType: "Normal",
-    });
->>>>>>> dev-sid
 
     await newUser.save();
     console.log(newUser, "new user");
