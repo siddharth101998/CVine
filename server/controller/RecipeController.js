@@ -248,16 +248,25 @@ const getCommentsByRecipeId = async (req, res) => {
     }
 };
 
-// Delete a comment by its comment id
+// Delete a comment by its comment id, and remove its reference from the Recipe.comments array
 const deleteComment = async (req, res) => {
     try {
-        const { id } = req.params; // The comment id to delete
-        const deletedComment = await RecipeComment.findByIdAndDelete(id);
-        if (!deletedComment) {
+        const { id } = req.params;
+        // Find the comment to know which recipe it belongs to
+        const comment = await RecipeComment.findById(id);
+        if (!comment) {
             return res.status(404).json({ message: 'Comment not found' });
         }
+        // Delete the comment document
+        await RecipeComment.findByIdAndDelete(id);
+        // Remove reference from Recipe.comments array, if schema tracks it
+        await Recipe.findByIdAndUpdate(
+            comment.recipeId,
+            { $pull: { comments: id } }
+        );
         res.status(200).json({ message: 'Comment deleted successfully' });
     } catch (error) {
+        console.error('Error deleting comment:', error);
         res.status(500).json({ message: 'Error deleting comment', error });
     }
 };
