@@ -287,6 +287,10 @@ app.post("/process-image", async (req, res) => {
     const detections = result.textAnnotations;
     const text = detections.length ? detections[0].description : "";
     console.log("✅ Extracted Text:", text);
+    if (!text.trim()) {
+      console.log("❌ No text detected from image.");
+      return res.status(200).json([]); // or res.json([]) is fine too
+    }
 
     // const keywords = text
     //   .toLowerCase()
@@ -344,7 +348,10 @@ Strict output rules:
       // In case of an error, you can fallback to a default empty object or simple regex search.
       wineAttributes = {};
     }
-
+    if (!wineAttributes || !wineAttributes.winery || !wineAttributes.name || !wineAttributes.grapeType) {
+      console.log("❌ Incomplete wine attributes from GPT.");
+      return res.status(200).json([]); // return an empty list
+    }
     console.log("Extracted Wine Attributes:", wineAttributes);
 
     if (!wineAttributes || !wineAttributes.winery) {
