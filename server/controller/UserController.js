@@ -107,42 +107,39 @@ const createUser = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { username, fullName, badges } = req.body;
+    const { username, fullName, badges, password } = req.body;
 
     if (!id) {
-      return res
-        .status(400)
-        .json({ success: false, message: "User ID is required." });
+      return res.status(400).json({ success: false, message: "User ID is required." });
     }
 
     const user = await User.findById(id);
     if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found." });
+      return res.status(404).json({ success: false, message: "User not found." });
     }
 
-    if (username) user.username = username;
-    if (fullName) user.fullName = fullName;
-    if (badges) user.badges = badges;
-
-    if (password) {
-      user.password = await bcrypt.hash(password, 10);
-    }
+    if (username)  user.username = username;
+    if (fullName)  user.fullName = fullName;
+    if (badges)    user.badges    = badges;
+    if (password)  user.password  = await bcrypt.hash(password, 10);
 
     await user.save();
+
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
     res.status(200).json({
       success: true,
       message: "User details updated successfully.",
-      data: user,
+      data: updatedUser,
     });
   } catch (error) {
     console.error("Error updating user:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server Error", error: error.message });
+    res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
+
+module.exports = { updateUser };
 const loginUser = async (req, res) => {
   try {
     const { email } = req.body;

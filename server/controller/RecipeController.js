@@ -271,6 +271,17 @@ const deleteComment = async (req, res) => {
     }
 };
 
+const getSavedRecipes = async (req, res) => {
+    try {
+      const userId = req.params.id;
+      const recipes = await Recipe.find({ savedusers: userId });
+      res.status(200).json(recipes);
+    } catch (error) {
+      console.error('Error fetching saved recipes:', error);
+      res.status(500).json({ message: 'Error fetching saved recipes', error });
+    }
+  };
+
 
 
 
@@ -285,5 +296,6 @@ module.exports = {
     toggleSave,
     createComment,
     getCommentsByRecipeId,
-    deleteComment,getRecipeCount,getRecipeByUserId
+    deleteComment,getRecipeCount,getRecipeByUserId,
+    getSavedRecipes,
 };
