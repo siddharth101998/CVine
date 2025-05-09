@@ -361,27 +361,20 @@ Strict output rules:
 
     // --------- Step 1: Query by Winery only ---------
     let normalizedWinery = wineAttributes.winery.replace(/\s+/g, '').toLowerCase();
-    const wineryRegex = new RegExp(`^${normalizedWinery}$`, 'i')
-    const nameRegex = new RegExp(wineAttributes.name, 'i')
 
-    // let matchingWines = await Bottle.find({
-    //   $expr: {
-    //     $regexMatch: {
-    //       input: { $replaceAll: { input: "$Winery", find: " ", replacement: "" } },
-    //       regex: normalizedWinery,
-    //       options: "i"
-    //     }
-    //   }
-    // });
+
     let matchingWines = await Bottle.find({
-      $or: [
-        { Winery: { $regex: wineryRegex } },  // or { winery: … } if your schema is lowercase
-        { name: { $regex: nameRegex } }
-      ]
-    })
+      $expr: {
+        $regexMatch: {
+          input: { $replaceAll: { input: "$Winery", find: " ", replacement: "" } },
+          regex: normalizedWinery,
+          options: "i"
+        }
+      }
+    });
 
-    console.log("After OR‐search, found:", matchingWines.length, "wine(s)")
-    // console.log("After Winery query, found:", matchingWines.length, "wine(s)");
+
+    console.log("After Winery query, found:", matchingWines.length, "wine(s)");
     if (matchingWines.length === 0 && wineAttributes.name) {
       // fallback: search by wine name
       const normalizedInputName = wineAttributes.name
