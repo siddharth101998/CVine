@@ -19,10 +19,10 @@ const BottleSchema = new mongoose.Schema({
     productlink: { type: String }
 });
 
-// Index for faster queries on the 'name' field (if needed for sorting or queries)
-BottleSchema.index({ name: 1 });
-
-// Compound index for filter fields used in search (adjust the order based on selectivity)
-BottleSchema.index({ country: 1, wineType: 1, grapeType: 1, region: 1 });
+BottleSchema.index({ country: 1, wineType: 1, grapeType: 1 });
+BottleSchema.index({ wineType: 1 });
+BottleSchema.index({ grapeType: 1 });
+BottleSchema.index({ country: 1 });
+BottleSchema.index({ name: "text" });
 
 module.exports = mongoose.model('Bottle', BottleSchema);
