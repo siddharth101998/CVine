@@ -362,7 +362,7 @@ Strict output rules:
     // --------- Step 1: Query by Winery only ---------
     let normalizedWinery = wineAttributes.winery.replace(/\s+/g, '').toLowerCase();
     const wineryRegex = new RegExp(`^${normalizedWinery}$`, 'i')
-    const nameRegex = new RegExp(nameValue, 'i')
+    const nameRegex = new RegExp(wineAttributes.name, 'i')
 
     // let matchingWines = await Bottle.find({
     //   $expr: {
