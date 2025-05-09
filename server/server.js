@@ -372,6 +372,17 @@ Strict output rules:
       }
     });
     console.log("After Winery query, found:", matchingWines.length, "wine(s)");
+    if (matchingWines.length === 0 && wineAttributes.name) {
+      // fallback: search by wine name
+      const normalizedInputName = wineAttributes.name
+        .replace(/\s+/g, "")
+        .toLowerCase();
+
+      matchingWines = await Bottle.find({
+        name: { $regex: wineAttributes.name, $options: "i" }
+      });
+      console.log("Fallback Name query, found:", matchingWines.length, "wine(s)");
+    }
 
     if (matchingWines.length > 1 && wineAttributes.name) {
       const normalizedInputName = wineAttributes.name.replace(/\s+/g, "").toLowerCase();
