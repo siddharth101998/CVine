@@ -20,5 +20,5 @@ router.get('/comment/:id',  recipeController.getCommentsByRecipeId);  // ← add
 // ─── ID‐based CRUD (last) ─────────────────────
 router.put('/:id',          recipeController.updateRecipe);
 router.delete('/:id',       recipeController.deleteRecipe);
-
+router.get('/saved/:id', recipeController.getSavedRecipes);
 module.exports = router;
