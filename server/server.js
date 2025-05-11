@@ -372,7 +372,7 @@ Strict output rules:
     //     }
     //   }
     // });
-    const matchingWines = await Bottle.find({
+    let matchingWines = await Bottle.find({
       $or: [
         // 1) match normalized‐Winery against Winery (spaces stripped)
         {
