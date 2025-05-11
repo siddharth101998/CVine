@@ -348,7 +348,7 @@ Strict output rules:
       // In case of an error, you can fallback to a default empty object or simple regex search.
       wineAttributes = {};
     }
-    if (!wineAttributes || !wineAttributes.winery || !wineAttributes.name || !wineAttributes.grapeType) {
+    if (!wineAttributes || (!wineAttributes.winery && !wineAttributes.name && !wineAttributes.grapeType)) {
       console.log("❌ Incomplete wine attributes from GPT.");
       return res.status(200).json([]); // return an empty list
     }
