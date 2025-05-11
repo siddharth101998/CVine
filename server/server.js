@@ -397,7 +397,7 @@ Strict output rules:
     });
 
 
-    console.log("After Winery query, found:", matchingWines.length, "wine(s)");
+    console.log("After Winery & name query, found:", matchingWines.length, "wine(s)");
     // if (matchingWines.length === 0 && wineAttributes.name) {
     //   // fallback: search by wine name
     //   const normalizedInputName = wineAttributes.name
@@ -410,21 +410,21 @@ Strict output rules:
     //   console.log("Fallback Name query, found:", matchingWines.length, "wine(s)");
     // }
 
-    if (matchingWines.length > 1 && wineAttributes.name) {
-      const normalizedInputName = wineAttributes.name.replace(/\s+/g, "").toLowerCase();
+    // if (matchingWines.length > 1 && wineAttributes.name) {
+    //   const normalizedInputName = wineAttributes.name.replace(/\s+/g, "").toLowerCase();
 
-      const nameMatches = matchingWines.filter((wine) => {
-        if (!wine.name) return false;
+    //   const nameMatches = matchingWines.filter((wine) => {
+    //     if (!wine.name) return false;
 
-        const normalizedWineName = wine.name.replace(/\s+/g, "").toLowerCase();
-        return normalizedWineName.includes(normalizedInputName);
-      });
+    //     const normalizedWineName = wine.name.replace(/\s+/g, "").toLowerCase();
+    //     return normalizedWineName.includes(normalizedInputName);
+    //   });
 
-      if (nameMatches.length > 0) {
-        matchingWines = nameMatches;
-      }
-    }
-    console.log("After Name filtering, found:", matchingWines.length, "wine(s)");
+    //   if (nameMatches.length > 0) {
+    //     matchingWines = nameMatches;
+    //   }
+    // }
+    // console.log("After Name filtering, found:", matchingWines.length, "wine(s)");
 
     // --------- Step 3: If still multiple, refine by grapeType ---------
     if (matchingWines.length > 1 && wineAttributes.grapeType) {
