@@ -363,29 +363,52 @@ Strict output rules:
     let normalizedWinery = wineAttributes.winery.replace(/\s+/g, '').toLowerCase();
 
 
-    let matchingWines = await Bottle.find({
-      $expr: {
-        $regexMatch: {
-          input: { $replaceAll: { input: "$Winery", find: " ", replacement: "" } },
-          regex: normalizedWinery,
-          options: "i"
-        }
-      }
+    // let matchingWines = await Bottle.find({
+    //   $expr: {
+    //     $regexMatch: {
+    //       input: { $replaceAll: { input: "$Winery", find: " ", replacement: "" } },
+    //       regex: normalizedWinery,
+    //       options: "i"
+    //     }
+    //   }
+    // });
+    const matchingWines = await Bottle.find({
+      $or: [
+        // 1) match normalized‐Winery against Winery (spaces stripped)
+        {
+          $expr: {
+            $regexMatch: {
+              input: {
+                $replaceAll: {
+                  input: "$Winery",
+                  find: " ",
+                  replacement: ""
+                }
+              },
+              regex: normalizedWinery,
+              options: "i"
+            }
+          }
+        },
+
+        // 2) match name field against wineAttributes.name
+        { name: { $regex: wineAttributes.name, $options: "i" } }
+      ]
     });
 
 
     console.log("After Winery query, found:", matchingWines.length, "wine(s)");
-    if (matchingWines.length === 0 && wineAttributes.name) {
-      // fallback: search by wine name
-      const normalizedInputName = wineAttributes.name
-        .replace(/\s+/g, "")
-        .toLowerCase();
+    // if (matchingWines.length === 0 && wineAttributes.name) {
+    //   // fallback: search by wine name
+    //   const normalizedInputName = wineAttributes.name
+    //     .replace(/\s+/g, "")
+    //     .toLowerCase();
 
-      matchingWines = await Bottle.find({
-        name: { $regex: wineAttributes.name, $options: "i" }
-      });
-      console.log("Fallback Name query, found:", matchingWines.length, "wine(s)");
-    }
+    //   matchingWines = await Bottle.find({
+    //     name: { $regex: wineAttributes.name, $options: "i" }
+    //   });
+    //   console.log("Fallback Name query, found:", matchingWines.length, "wine(s)");
+    // }
 
     if (matchingWines.length > 1 && wineAttributes.name) {
       const normalizedInputName = wineAttributes.name.replace(/\s+/g, "").toLowerCase();
