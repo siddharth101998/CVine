@@ -1,95 +1,206 @@
-import React from "react";
-import { AppBar, Toolbar, Button, Box } from "@mui/material";
-import { Link } from "react-router-dom";
-import backgroundVideo from "../assets/fizz_button_bg.mp4"; // Background video
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { AppBar, Toolbar, IconButton, Button, Drawer, List, ListItem, ListItemText, Box } from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import Logo from "../assets/logo.png";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
-    return (
-        <Box sx={{ position: "relative", width: "100vw", height: "80px", overflow: "hidden" }}>
-            {/* Background Video */}
-            <video
-                src={backgroundVideo}
-                autoPlay
-                loop
-                muted
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    zIndex: -1, // Keep behind the navbar
-                }}
-            />
+    const { user } = useAuth();
+    const [mobileOpen, setMobileOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
+    const navigate = useNavigate();
 
-            {/* Navbar */}
-            <AppBar position="static" sx={{ background: "transparent", boxShadow: "none" }}>
-                <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    
-                    {/* Left - Navigation Links */}
-                    <Box sx={{ display: "flex", gap: 3 }}>
-                        <Button component={Link} to="/" sx={navButtonStyle}>
-                            Home
-                        </Button>
-                        <Button component={Link} to="/discover" sx={navButtonStyle}>
-                            Discover
-                        </Button>
-                        <Button component={Link} to="/about" sx={navButtonStyle}>
-                            About
-                        </Button>
-                        <Button component={Link} to="/contact" sx={navButtonStyle}>
-                            Contact
-                        </Button>
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    // Define left navigation items (static)
+    const leftNavItems = [
+        { label: "Home", url: "/homepage" },
+        { label: "Scan Wine", url: "/chat" },
+        { label: "Get Recommendation", url: "/recommend" }
+    ];
+
+    // Define right navigation items that are always present
+    const rightNavItems = [
+        { label: "Pairing Guide", url: "/pairing-guide" },
+<<<<<<< HEAD
+        { label: "About Us", url: "/about-us" }
+=======
+        { label: "Dashboard", url: "/dashboard" },
+        { label: "Login/Register", url: "/login-register" },
+        { label: "Profile", url: "/profile" }
+>>>>>>> dev-sid
+    ];
+
+    // Conditionally add the login or profile button based on the user status
+    if (user) {
+        rightNavItems.push({ label: "Profile", url: "/profile" });
+    } else {
+        rightNavItems.push({ label: "Login/Register", url: "/login_register" });
+    }
+
+    // For mobile view, show all nav items in order (left + right)
+    const mobileNavItems = [...leftNavItems, ...rightNavItems];
+
+    return (
+        <>
+            {/* Top Navigation Bar */}
+            <AppBar
+                position="sticky"
+                sx={{
+                    background: "#f2e1e5",
+                    boxShadow: "none",
+                    transition: "0.3s ease-in-out",
+                    height: "80px",
+                    display: "flex",
+                    justifyContent: "center",
+                }}
+            >
+                <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative" }}>
+                    {/* Mobile Menu Button */}
+                    <IconButton sx={{ display: { md: "none" }, color: "black" }} onClick={handleDrawerToggle}>
+                        <MenuIcon />
+                    </IconButton>
+
+                    {/* Navigation Links (Left Side) */}
+                    <Box sx={{ display: { xs: "none", md: "flex" }, gap: 6, flexGrow: 1, justifyContent: "flex-start" }}>
+                        {leftNavItems.map((item, index) => (
+                            <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
+                                <Button
+                                    onClick={() => navigate(item.url)}
+                                    sx={{
+                                        color: "black",
+                                        textTransform: "none",
+                                        fontSize: "1rem",
+                                        fontWeight: "normal",
+                                        position: "relative",
+                                        '&:hover': {
+                                            color: "#b22222",
+                                            fontWeight: "bold",
+                                            fontSize: "1.125rem",
+                                        },
+                                        '&:hover::after': {
+                                            content: '""',
+                                            position: "absolute",
+                                            bottom: 0,
+                                            left: 0,
+                                            width: "100%",
+                                            height: "4px",
+                                            backgroundColor: "#b22222",
+                                        }
+                                    }}
+                                >
+                                    {item.label}
+                                </Button>
+                            </Box>
+                        ))}
                     </Box>
 
-                    {/* Right - Auth Buttons */}
-                    <Box sx={{ display: "flex", gap: 2 }}>
-                        <Button component={Link} to="/login" sx={authButtonStyle}>
-                            Login
-                        </Button>
-                        <Button component={Link} to="/signup" sx={signupButtonStyle}>
-                            Sign Up
-                        </Button>
+                    {/* Logo in the Center */}
+                    <Box sx={{
+                        position: "absolute",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        '& img': {
+                            transition: "transform 0.3s ease-in-out",
+                        },
+                        '& img:hover': {
+                            transform: "scale(1.5)",
+                        }
+                    }}>
+                        <img src={Logo} alt="CVine Logo" style={{ height: "80px" }} />
+                    </Box>
+
+                    {/* Navigation Links (Right Side) */}
+                    <Box
+                        sx={{
+                            display: { xs: "none", md: "flex" },
+                            gap: 6,
+                            flexGrow: 1,
+                            justifyContent: "flex-end",
+                        }}
+                    >
+                        {rightNavItems.map((item, index) => (
+                            <Box key={index} sx={{ position: "relative", display: "inline-block" }}>
+                                <Button
+                                    onClick={() => navigate(item.url)}
+                                    sx={{
+                                        color: "black",
+                                        textTransform: "none",
+                                        fontSize: "1rem",
+                                        fontWeight: "normal",
+                                        position: "relative",
+                                        '&:hover': {
+                                            color: "#b22222",
+                                            fontWeight: "bold",
+                                            fontSize: "1.125rem",
+                                        },
+                                        '&:hover::after': {
+                                            content: '""',
+                                            position: "absolute",
+                                            bottom: 0,
+                                            left: 0,
+                                            width: "100%",
+                                            height: "4px",
+                                            backgroundColor: "#b22222",
+                                        },
+                                    }}
+                                >
+                                    {item.label}
+                                </Button>
+                            </Box>
+                        ))}
                     </Box>
                 </Toolbar>
             </AppBar>
-        </Box>
+
+            {/* Mobile Drawer */}
+            <Drawer anchor="left" open={mobileOpen} onClose={handleDrawerToggle}>
+                <List>
+                    {mobileNavItems.map((item, index) => (
+                        <ListItem
+                            button
+                            key={index}
+                            onClick={() => {
+                                handleDrawerToggle();
+                                navigate(item.url);
+                            }}
+                        >
+                            <ListItemText primary={item.label} />
+                        </ListItem>
+                    ))}
+                </List>
+            </Drawer>
+
+            {/* Floating Scan Button */}
+            <IconButton
+                sx={{
+                    position: "fixed",
+                    bottom: 20,
+                    right: 20,
+                    backgroundColor: "#B22222",
+                    color: "white",
+                    padding: 2,
+                    boxShadow: "0px 4px 10px rgba(0,0,0,0.2)",
+                    '&:hover': { backgroundColor: "#722F37" },
+                }}
+            >
+                <CameraAltIcon />
+            </IconButton>
+        </>
     );
-};
-
-// Common Styles for Navbar Buttons
-const navButtonStyle = {
-    color: "white",
-    fontWeight: "bold",
-    fontSize: "1rem",
-    textTransform: "none",
-    "&:hover": { color: "#FFD700" },
-};
-
-// Login Button Style
-const authButtonStyle = {
-    color: "white",
-    fontWeight: "bold",
-    border: "2px solid white",
-    borderRadius: "20px",
-    padding: "5px 15px",
-    textTransform: "none",
-    "&:hover": {
-        background: "rgba(255, 255, 255, 0.2)",
-        borderColor: "#FFD700",
-    },
-};
-
-// Signup Button Style
-const signupButtonStyle = {
-    background: "linear-gradient(45deg, #FF416C, #FF4B2B)",
-    color: "white",
-    fontWeight: "bold",
-    borderRadius: "20px",
-    padding: "5px 20px",
-    textTransform: "none",
-    "&:hover": { background: "linear-gradient(45deg, #FF4B2B, #FF416C)" },
 };
 
 export default Navbar;
