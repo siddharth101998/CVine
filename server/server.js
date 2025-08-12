@@ -34,6 +34,34 @@ app.use(
 connectDB();
 
 //API's for ChatGPT
+function extractJSON(text) {
+  if (typeof text !== "string") throw new Error("LLM response not a string");
+  // Remove code fences just in case
+  const cleaned = text.replace(/```(json)?/gi, "").replace(/```/g, "").trim();
+
+  // Find the first JSON object or array
+  const firstObj = cleaned.indexOf("{");
+  const firstArr = cleaned.indexOf("[");
+  let start = -1;
+  if (firstObj === -1 && firstArr === -1) throw new Error("No JSON start found");
+  if (firstArr === -1) start = firstObj;
+  else if (firstObj === -1) start = firstArr;
+  else start = Math.min(firstObj, firstArr);
+
+  // Match the ending brace/bracket by scanning
+  let open = 0, closeChar = cleaned[start] === "{" ? "}" : "]";
+  for (let i = start; i < cleaned.length; i++) {
+    if (cleaned[i] === cleaned[start]) open++;
+    else if (cleaned[i] === closeChar) {
+      open--;
+      if (open === 0) {
+        const slice = cleaned.slice(start, i + 1);
+        return JSON.parse(slice);
+      }
+    }
+  }
+  throw new Error("Unbalanced JSON in model output");
+}
 
 async function callOpenAI(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
@@ -280,15 +308,15 @@ app.post("/process-image", async (req, res) => {
     const { imageUrl } = req.body;
     console.log(imageUrl);
     if (!imageUrl)
-      return res.status(400).json({ message: "❌ Image URL is required" });
+      return res.status(400).json({ message: " Image URL is required" });
 
     // Perform OCR using Google Cloud Vision
     const [result] = await client.textDetection(imageUrl);
     const detections = result.textAnnotations;
     const text = detections.length ? detections[0].description : "";
-    console.log("✅ Extracted Text:", text);
+    console.log(" Extracted Text:", text);
     if (!text.trim()) {
-      console.log("❌ No text detected from image.");
+      console.log(" No text detected from image.");
       return res.status(200).json([]); // or res.json([]) is fine too
     }
 
@@ -349,7 +377,7 @@ Strict output rules:
       wineAttributes = {};
     }
     if (!wineAttributes || (!wineAttributes.winery && !wineAttributes.name && !wineAttributes.grapeType)) {
-      console.log("❌ Incomplete wine attributes from GPT.");
+      console.log(" Incomplete wine attributes from GPT.");
       return res.status(200).json([]); // return an empty list
     }
     console.log("Extracted Wine Attributes:", wineAttributes);
@@ -615,6 +643,7 @@ Strict output rules:
 //API'ss for DataBase
 
 // Wine Recommendation Route
+
 app.post("/api/recommend", async (req, res) => {
   try {
     const { selectedBottles } = req.body;
@@ -634,16 +663,13 @@ Deduplicate identical triplets.
 Return only: { "preferences": [ ... ] }
     `;
     const rawAttr = (await callOpenAI(attributePrompt))
-      .replace(/```(json)?/gi, "")
-      .trim();
-    const { preferences } = JSON.parse(rawAttr);
+ const { preferences } = extractJSON(rawAttr);   
 
-    if (!preferences?.length) {
-      return res.status(500).json({ error: "No wine attributes returned." });
-    }
+if (!Array.isArray(preferences) || !preferences.length) {
+  return res.status(500).json({ error: "No wine attributes returned." });
+}
 
-    // === Stage 2: Fetch candidate bottles in parallel ===
-    // Use Mongoose lean() for plain JS objects and proper indexing on wineType, region, grapeType
+
     const perPref = Math.floor(50 / preferences.length);
     const finds = preferences.map(pref => {
       const regex = str => str ? new RegExp(str, "i") : /.*/;
@@ -661,7 +687,7 @@ Return only: { "preferences": [ ... ] }
       .filter(b => b.name)
       .map(b => ({ id: b._id.toString(), name: b.name, imageUrl: b.imageUrl }));
 
-    // Fill up to 50 if needed
+    // Fill up to 50 
     if (candidateBottles.length < 50) {
       const extra = await Bottle.find().lean()
         .limit(50 - candidateBottles.length)
@@ -681,10 +707,11 @@ Exclude any input names.
 Return only a JSON array:
 [ { "bottleId":"…", "bottleName":"…", "explanation":"…" } ]
     `;
-    const rawRec = (await callOpenAI(finalPrompt))
-      .replace(/```(json)?/gi, "")
-      .trim();
-    const recs = JSON.parse(rawRec);
+    const rawRec = (await callOpenAI(finalPrompt));
+    const recs = extractJSON(rawRec);               // <-- robust
+if (!Array.isArray(recs)) {
+  return res.status(500).json({ error: "Recommendations JSON invalid." });
+}
 
     // Enrich with imageUrl and return
     const enriched = recs.map(r => {
